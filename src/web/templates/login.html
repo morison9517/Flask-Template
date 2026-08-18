@@ -1,0 +1,57 @@
+{# ==========================================================================
+   ログイン画面
+
+   ▼ HTMLとFlaskの対応関係(ここだけ押さえれば読める)
+     <input name="username">  ←→  Python側 request.form.get("username")
+     この名前がズレると値が届かない。
+
+     action="{{ url_for('auth.login') }}"  … 送り先を島の名前で指定
+     value="{{ username or '' }}"          … 失敗時に入力を復元(Pythonから受け取る)
+   ========================================================================== #}
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="auth-panel">
+  <h1>ログイン</h1>
+
+  <form method="post" action="{{ url_for('auth.login') }}" class="stacked-form">
+    {# 整理券。フォームを送るときは必ずこの1行を入れる。忘れると400エラー。 #}
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+    <div class="field">
+      <label for="username">ユーザー名</label>
+      <input
+        type="text"
+        id="username"
+        name="username"
+        value="{{ username or '' }}"
+        {# required はブラウザ側の親切機能で、防御ではない(検査画面から外せる)。
+           Python側でも同じチェックをしている(auth/routes.py 参照)。 #}
+        required
+        autocomplete="username"
+        autofocus
+      />
+    </div>
+
+    <div class="field">
+      <label for="password">パスワード</label>
+      <input
+        type="password"
+        id="password"
+        name="password"
+        required
+        autocomplete="current-password"
+      />
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-block">ログイン</button>
+  </form>
+
+  <p class="auth-switch">
+    アカウントがまだない方は
+    <a href="{{ url_for('auth.register') }}">新規登録</a>
+  </p>
+</section>
+
+{% endblock %}

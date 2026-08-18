@@ -1,0 +1,88 @@
+{# ==========================================================================
+   トップページ。base.html の型紙を受け継いで「中身だけ」書く。
+
+   ▼ extends の決まり
+     1行目に書く(型紙を決める前に中身は書けない)。
+     extends したファイルでは、block の外側に書いたものは無視される。
+     つまり中身は必ず {% block content %} の中に入れる。
+   ========================================================================== #}
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="hero">
+  <h1>セットアップ完了 🎉</h1>
+  <p class="lead">この画面が見えていれば、Flask・Docker・DBの接続まで動いています。</p>
+</section>
+
+<section class="card-grid">
+  <article class="card">
+    <h2>いまの状態</h2>
+    <dl class="status-list">
+      <dt>アプリ</dt>
+      <dd><span class="badge badge-ok">起動中</span></dd>
+
+      <dt>データベース</dt>
+      <dd>
+        {# db_status は routes.py の index() から渡された値 #}
+        {% if db_status == "ok" %}
+        <span class="badge badge-ok">接続OK</span>
+        {% else %}
+        <span class="badge badge-ng">未接続</span>
+        <small>{{ db_message }}</small>
+        {% endif %}
+      </dd>
+
+      <dt>ログイン機能</dt>
+      <dd>
+        {% if config.AUTH_ENABLED %}
+        <span class="badge badge-ok">有効</span>
+        {% else %}
+        <span class="badge badge-off">無効</span>
+        {% endif %}
+      </dd>
+
+      <dt>ログイン状態</dt>
+      <dd>
+        {% if current_user.is_authenticated %}
+        <span class="badge badge-ok">{{ current_user.username }} さんとしてログイン中</span>
+        {% else %}
+        <span class="badge badge-off">未ログイン</span>
+        {% endif %}
+      </dd>
+    </dl>
+  </article>
+
+  <article class="card">
+    <h2>担当ごとに触る場所</h2>
+    <p class="note">分けてあるので、基本的にファイルの取り合いになりません。</p>
+    <table class="role-table">
+      <thead>
+        <tr>
+          <th>担当</th>
+          <th>触る場所</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>見た目</td>
+          <td><code>templates/</code> と <code>static/css/</code></td>
+        </tr>
+        <tr>
+          <td>画面の動き</td>
+          <td><code>static/js/</code></td>
+        </tr>
+        <tr>
+          <td>データの形</td>
+          <td><code>models.py</code></td>
+        </tr>
+        <tr>
+          <td>URLと処理</td>
+          <td><code>routes.py</code> / <code>api.py</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </article>
+</section>
+
+{% endblock %}

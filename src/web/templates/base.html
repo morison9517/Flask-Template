@@ -1,0 +1,105 @@
+{# ==========================================================================
+   base.html = 全ページ共通の「型紙」
+
+   ▼ Jinja(Flaskのテンプレート)の仕組み
+     ここに書いたヘッダー・フッター・CSS読み込みを、各ページが受け継ぐ。
+     各ページは「真ん中の中身だけ」を書けばよく、ヘッダーの重複がなくなる。
+     ヘッダーを直したいときは、このファイル1枚を直せば全ページに反映される。
+
+   ▼ {% block 名前 %}{% endblock %} = 型紙に空けた「穴」
+     各ページが同じ名前の block を書くと、その中身がここに差し込まれる。
+     このファイルにある穴は3つ:
+         head_extra … そのページ専用のCSSを足したいとき
+         content    … ページの本体(必須)
+         scripts    … そのページ専用のJSを足したいとき
+     block の中に書いたものが「初期値」になり、
+     ページ側が同名の block を書かなければ初期値がそのまま出る。
+
+   ▼ カッコの使い分け
+     {{  }} … 値を表示する        例:{{ title }}
+     {%  %} … 命令(if / for など)
+     {# で始まるもの … コメント(HTMLにも出力されない)← いま読んでいるこれ
+
+   ★Jinjaのコメントは入れ子にできない。
+     コメントの中に閉じ記号(シャープ + 閉じ波かっこ)を書くと、そこで
+     コメントが終わったと判断され、残りが本文としてHTMLに出力される。
+  ========================================================================== #}
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    {# JavaScriptから送信するときにも整理券(CSRFトークン)が必要なので、
+       ここに置いてJS側から読み取れるようにしている(仕掛けは main.js)。 #}
+    <meta name="csrf-token" content="{{ csrf_token() }}" />
+
+    {# 各ページから title を渡せば「ホーム | Flask Template Demo」になり、
+       渡さなければ「Hack App」だけになる。 #}
+    <title>{% if title %}{{ title }} | {% endif %}Flask Template Demo</title>
+
+    {# ▼ url_for('static', filename=...) を使う理由
+       "/static/css/style.css" と直書きしても動くが、url_for なら
+       Flaskが正しいパスを組み立てるので、公開場所が変わっても直さずに済む。 #}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+
+    {% block head_extra %}{% endblock %}
+  </head>
+
+  <body>
+    <header class="site-header">
+      <div class="container header-inner">
+        {# url_for('main.index') = routes.py の main_bp の index() のURL。
+           "島の名前.関数名" で指定する。URL文字列を直書きしない。 #}
+        <a class="site-title" href="{{ url_for('main.index') }}">Flask Template Demo</a>
+
+        <nav class="site-nav">
+          {# config.AUTH_ENABLED = config.py の設定値。テンプレートから直接読める。
+             OFFにしたときにログインへのリンクが壊れないようにしている。
+
+             current_user = 今アクセスしている人。Flask-Loginが全ページで
+             自動的に使えるようにしてくれるので、routes.py から渡す必要はない。 #}
+          {% if config.AUTH_ENABLED %} {% if current_user.is_authenticated %}
+          <span class="nav-user">{{ current_user.username }} さん</span>
+
+          {# ログアウトはPOST(理由は auth/routes.py のコメント参照) #}
+          <form action="{{ url_for('auth.logout') }}" method="post" class="inline-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button type="submit" class="btn btn-ghost">ログアウト</button>
+          </form>
+          {% else %}
+          <a class="btn btn-ghost" href="{{ url_for('auth.login') }}">ログイン</a>
+          <a class="btn btn-primary" href="{{ url_for('auth.register') }}">新規登録</a>
+          {% endif %} {% endif %}
+        </nav>
+      </div>
+    </header>
+
+    {# ▼ flash メッセージの表示場所(全ページ共通なのでここに1回だけ書く)
+       Pythonで flash("保存しました", "success") と書いたものが取り出される。
+       category("success"/"error"/"warning")をCSSのクラス名にして色を変えている。
+       各ページで「保存できました」の表示を自作する必要はない。 #}
+    <div class="container">
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if messages %}
+      <ul class="flash-list">
+        {% for category, message in messages %}
+        <li class="flash flash-{{ category }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %} {% endwith %}
+    </div>
+
+    {# 各ページの中身がここに入る #}
+    <main class="container">{% block content %}{% endblock %}</main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <small>Team AIB</small>
+      </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

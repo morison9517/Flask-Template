@@ -1,0 +1,23 @@
+{
+  // ==========================================================================
+  // 推薦する拡張機能。
+  // このプロジェクトをVSCodeで開くと通知が出て、まとめてインストールできる。
+  // ==========================================================================
+
+  "recommendations": [
+    // --- Python ---
+    "ms-python.python",
+    "charliermarsh.ruff", // 書き方チェック + 自動整形
+
+    // --- Docker ---
+    "ms-azuretools.vscode-docker",
+
+    // --- テンプレート / HTML ---
+    "samuelcolvin.jinjahtml", // {% %} {{ }} に色が付く
+    "formulahendry.auto-rename-tag",
+
+    // --- チーム開発 ---
+    "eamodio.gitlens", // 誰がどの行をいつ書いたか見える
+    "streetsidesoftware.code-spell-checker"
+  ]
+}

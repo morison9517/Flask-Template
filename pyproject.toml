@@ -1,0 +1,36 @@
+[project]
+name = "case_flask"
+version = "0.1.0"
+description = "ハッカソン用テンプレート(Flask)"
+requires-python = ">=3.13"
+
+# ライブラリを増やすときは、ここに1行足してから
+# docs/SETUP.md の「ライブラリを追加したいとき」を実行する。
+dependencies = [
+    "Flask",
+    "python-dotenv",      # .env から設定を読み込む
+    "Flask-SQLAlchemy",   # SQLを書かずにDBを操作する
+    "PyMySQL",            # PythonとMySQLの通訳
+    "cryptography",       # MySQL8のログイン方式に必要(PyMySQLの相棒)
+    "Flask-Login",        # ログイン状態の管理
+    "Flask-WTF",          # フォームの成りすまし対策(CSRF)
+]
+
+# 開発中だけ使う道具。本番のサーバーには入れない。
+[dependency-groups]
+dev = [
+    "ruff",  # 書き方チェック + 自動整形
+]
+
+# 「配布するライブラリではなく、動かすアプリ」という宣言。
+# これがあると uv が余計なビルドをスキップする。
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+# E,F=基本的な間違い / I=importの並び順 / UP=古い書き方
+select = ["E", "F", "I", "UP"]
