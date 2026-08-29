@@ -28,6 +28,29 @@ docker compose exec web flask init-db
 
 ---
 
+## 最初に出るデモページについて
+
+起動して `/` を開くと「セットアップ完了 🎉」というデモページが出ます。
+**これは消さなくて大丈夫です。** DjangoやRailsの初期画面と同じ仕組みで、条件を満たすと自動で出なくなります。
+
+| | |
+| --- | --- |
+| 出る条件 | 開発モード **かつ** `src/web/routes.py` にまだ `"/"` が無いとき |
+| 消える条件 | `routes.py` に `"/"` を1つ書く(それだけ) |
+| 本番 | `FLASK_ENV=production` では最初から出ない |
+| あとで見たい | `/__demo` で開ける(開発モードのときだけ) |
+
+```python
+# src/web/routes.py にこれを書いた瞬間、デモは出なくなります
+@main_bp.get("/")
+def index():
+    return render_template("index.html", title="ホーム")
+```
+
+デモ一式は `src/web/demo/` にまとまっています。不要になったらフォルダごと削除して、`app.py` の「デモ」の3行を消してください。
+
+---
+
 ## 使っている技術
 
 | 分類 | 技術 |
@@ -54,6 +77,7 @@ case_flask/
 │   ├── models.py           データの形(DBの表)を決める
 │   ├── routes.py           画面を返す受付。URL → HTML
 │   ├── auth/               ログイン・新規登録
+│   ├── demo/               動作確認用のデモページ(開発モード限定・触らない)
 │   ├── templates/          お客さんが見るHTML(base.html が共通の型紙)
 │   └── static/             CSS / JS / 画像
 │

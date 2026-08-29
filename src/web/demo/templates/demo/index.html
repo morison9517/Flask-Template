@@ -1,7 +1,16 @@
 {# ==========================================================================
-   トップページ。base.html の型紙を受け継いで「中身だけ」書く。
+   デモページ(このファイルは自分たちのプロダクトには含まれません)
 
-   ▼ extends の決まり
+   ▼ このページが出ている理由
+     開発モードで、かつ routes.py にまだトップページ("/")が無いから。
+     routes.py に "/" を1つ書いた瞬間に、この画面は自動で出なくなる。
+     消す作業は不要。本番モードでは最初から出ない。
+
+     いつでも見たいときは /__demo で開ける(開発モードのときだけ)。
+
+   ▼ 新しいページを作るときは、このファイルの書き方をまねる
+
+     extends の決まり:
      1行目に書く(型紙を決める前に中身は書けない)。
      extends したファイルでは、block の外側に書いたものは無視される。
      つまり中身は必ず {% block content %} の中に入れる。
@@ -24,7 +33,7 @@
 
       <dt>データベース</dt>
       <dd>
-        {# db_status は routes.py の index() から渡された値 #}
+        {# db_status は demo/routes.py の index() から渡された値 #}
         {% if db_status == "ok" %}
         <span class="badge badge-ok">接続OK</span>
         {% else %}
@@ -82,6 +91,19 @@
         </tr>
       </tbody>
     </table>
+  </article>
+
+  <article class="card">
+    <h2>ここから作りはじめる</h2>
+    <p class="note">この画面を消す作業はありません。下を書けば自動で入れ替わります。</p>
+    <ol class="step-list">
+      <li><code>src/web/routes.py</code> に <code>@main_bp.get("/")</code> の関数を1つ書く</li>
+      <li><code>src/web/templates/</code> にそのHTMLを1枚置く</li>
+      <li>ブラウザを再読み込みすると、このデモではなく自分たちの画面が出る</li>
+    </ol>
+    <p class="note">
+      デモをもう一度見たいときは <a href="/__demo">/__demo</a>(開発モードのときだけ開けます)。
+    </p>
   </article>
 </section>
 

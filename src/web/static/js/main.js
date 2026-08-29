@@ -6,7 +6,7 @@
      ページごとに別ファイルを作り、そのページのHTMLで読み込む:
 
        {% block scripts %}
-         <script src="{{ url_for('static', filename='js/todo.js') }}"></script>
+         <script src="{{ url_for('static', filename='js/mypage.js') }}"></script>
        {% endblock %}
    =========================================================================== */
 

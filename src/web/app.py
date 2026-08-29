@@ -75,6 +75,16 @@ def _register_blueprints(app: Flask) -> None:
 
         app.register_blueprint(auth_bp, url_prefix="/auth")
 
+    # --- デモ(動作確認用のページ) ---
+    # ★必ず最後に取り付ける。
+    #   「自分たちのトップページが既にあるか」を見てから動くので、
+    #   先に取り付けると判定できない。
+    #   開発モードのときだけ。本番では取り付けないので絶対に出ない。
+    if app.config.get("DEBUG"):
+        from web.demo import register_demo
+
+        register_demo(app)
+
 
 def _register_commands(app: Flask) -> None:
     """ターミナルから使えるコマンドを登録する(実行方法は docs/SETUP.md)。"""

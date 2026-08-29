@@ -13,7 +13,7 @@
 
 from urllib.parse import urlsplit
 
-from flask import flash, redirect, render_template, request, url_for
+from flask import flash, redirect, render_template, request
 from flask_login import current_user, login_required, login_user, logout_user
 
 from web.auth import auth_bp
@@ -21,23 +21,26 @@ from web.extensions import db
 from web.models import User
 
 
-def _safe_redirect_target(target: str | None, fallback_endpoint: str = "main.index") -> str:
+def _safe_redirect_target(target: str | None, fallback: str = "/") -> str:
     """ログイン後の遷移先が安全か確かめる。
 
     ログイン画面のURLには /auth/login?next=/mypage のように戻り先が付く。
     この next を無条件に信じると、?next=https://偽サイト.com というリンクを
     配られてログイン直後に飛ばされる(オープンリダイレクト)。
     自サイト内("/"始まり)だけを許可する。
+
+    ★行き先が名前(url_for)ではなく "/" なのは、トップページの持ち主が
+      デモ → 自分たちのページ と入れ替わるため。場所自体は変わらない。
     """
     if not target:
-        return url_for(fallback_endpoint)
+        return fallback
 
     # 自サイト内なら /mypage の形なのでドメイン名(netloc)は空になる。
     parts = urlsplit(target)
     if parts.netloc or parts.scheme:
-        return url_for(fallback_endpoint)
+        return fallback
     if not target.startswith("/"):
-        return url_for(fallback_endpoint)
+        return fallback
     return target
 
 
@@ -47,7 +50,7 @@ def register():
 
     # current_user = 今アクセスしている人。Flask-Loginが用意する。
     if current_user.is_authenticated:
-        return redirect(url_for("main.index"))
+        return redirect("/")
 
     if request.method == "POST":
         # request.form.get("username") の "username" は
@@ -93,7 +96,7 @@ def register():
 
         login_user(user)
         flash(f"ようこそ、{user.username} さん!", "success")
-        return redirect(url_for("main.index"))
+        return redirect("/")
 
     return render_template("register.html", title="新規登録")
 
@@ -103,7 +106,7 @@ def login():
     """ユーザー名とパスワードを照合してログインさせる。"""
 
     if current_user.is_authenticated:
-        return redirect(url_for("main.index"))
+        return redirect("/")
 
     if request.method == "POST":
         username = request.form.get("username", "").strip()
@@ -145,4 +148,4 @@ def logout():
     """
     logout_user()
     flash("ログアウトしました。", "success")
-    return redirect(url_for("main.index"))
+    return redirect("/")

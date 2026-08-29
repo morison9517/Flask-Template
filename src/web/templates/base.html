@@ -49,9 +49,14 @@
   <body>
     <header class="site-header">
       <div class="container header-inner">
-        {# url_for('main.index') = routes.py の main_bp の index() のURL。
-           "島の名前.関数名" で指定する。URL文字列を直書きしない。 #}
-        <a class="site-title" href="{{ url_for('main.index') }}">Flask Template Demo</a>
+        {# ★ここだけURLを直書きしている理由
+           トップページは「デモ」と「自分たちのページ」で持ち主が入れ替わるので、
+           名前(url_for)で呼ぶと、持ち主が居ない間はエラーになる。
+           "/" という場所自体は変わらないので、ここはパスで書いておく。
+
+           トップ以外のページは url_for('main.○○') のように名前で呼ぶこと。
+           URL文字列を直書きしなければ、後からURLを変えても呼び出し側を直さずに済む。 #}
+        <a class="site-title" href="/">Flask Template Demo</a>
 
         <nav class="site-nav">
           {# config.AUTH_ENABLED = config.py の設定値。テンプレートから直接読める。
