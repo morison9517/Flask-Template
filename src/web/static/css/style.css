@@ -7,6 +7,15 @@
 
 /* ===========================================================================
    1. パレット
+
+   色や余白の値はここで1回だけ決めて、あとは var(--名前) で呼ぶ。
+   プロダクトの色が決まったら、ここの1行を直せば全画面に反映される。
+
+       :root { --color-primary: #4f46e5; }
+       .btn-primary { background: var(--color-primary); }
+
+   ★新しい部品も必ず var(--...) で書く。#ffffff の直書きはしない。
+     直書きすると、そこだけ暗い画面で白く光る。
    =========================================================================== */
 :root {
   --color-bg: #f7f8fb;
@@ -41,7 +50,7 @@
   --container: 1040px;
 }
 
-/* ダークモードはパレットの値だけ差し替える(以下のデザインは触らない) */
+/* OSがダークモードのときだけ、変わる値を上書きする。部品側は触らない。 */
 @media (prefers-color-scheme: dark) {
   :root {
     --color-bg: #14161f;
@@ -62,6 +71,9 @@
 
 /* ===========================================================================
    2. リセット
+
+   ブラウザが勝手に付ける余白や装飾をならして、出発点を揃える場所。
+   ページを作るときはここを触らない。
    =========================================================================== */
 *,
 *::before,
@@ -110,6 +122,9 @@ code {
 
 /* ===========================================================================
    3. 共通部品
+
+   どのページでも使う部品(ヘッダー・ボタン・入力欄・メッセージなど)。
+   ★ここを直すと全ページに効く。1ページだけ変えたいときは 4 に書く。
    =========================================================================== */
 
 /* --- ヘッダー --- */
@@ -228,31 +243,11 @@ code {
   background: var(--color-warning-soft);
   border-color: var(--color-warning);
 }
+
 /* category を省略して flash("...") と書いた場合はこれになる */
 .flash-message {
   background: var(--color-primary-soft);
   border-color: var(--color-primary);
-}
-
-/* --- カード --- */
-.card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: var(--space-5);
-}
-
-.card h2 {
-  margin-top: 0;
-  font-size: 1.05rem;
-}
-
-.card-grid {
-  display: grid;
-  gap: var(--space-4);
-  margin: var(--space-5) 0 var(--space-7);
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
 /* --- フォーム --- */
@@ -298,91 +293,10 @@ code {
 
 /* ===========================================================================
    4. ページごと
+
+   そのページでしか使わない見た目。
+   ★2ページ以上で使うようになったら 3 に引っ越す。
    =========================================================================== */
-
-/* --- トップページ --- */
-.hero {
-  padding: var(--space-7) 0 var(--space-5);
-}
-
-.hero h1 {
-  margin: 0 0 var(--space-2);
-  font-size: clamp(1.5rem, 4vw, 2.1rem);
-}
-
-.lead {
-  margin: 0;
-  color: var(--color-text-muted);
-}
-
-.status-list {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: var(--space-2) var(--space-4);
-  margin: 0;
-  align-items: center;
-}
-
-.status-list dt {
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--color-text-muted);
-}
-
-.status-list dd {
-  margin: 0;
-}
-
-.badge {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 999px;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-.badge-ok {
-  background: var(--color-success-soft);
-  color: var(--color-success);
-}
-.badge-ng {
-  background: var(--color-error-soft);
-  color: var(--color-error);
-}
-.badge-off {
-  background: var(--color-border);
-  color: var(--color-text-muted);
-}
-
-.note {
-  margin-top: 0;
-  font-size: 0.9rem;
-  color: var(--color-text-muted);
-}
-
-.role-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-}
-
-.role-table th,
-.role-table td {
-  text-align: left;
-  padding: var(--space-2) 0;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.role-table th {
-  color: var(--color-text-muted);
-  font-weight: 600;
-}
-
-.step-list {
-  margin: 0 0 var(--space-3);
-  padding-left: 1.4em;
-  font-size: 0.9rem;
-  line-height: 1.9;
-}
 
 /* --- ログイン / 新規登録 --- */
 .auth-panel {

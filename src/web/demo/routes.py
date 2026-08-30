@@ -6,6 +6,7 @@
 # =============================================================================
 
 from flask import render_template
+from flask_login import current_user
 from sqlalchemy import text
 
 from web.demo import demo_bp
@@ -27,6 +28,11 @@ def index():
         title="セットアップ確認",
         db_status=db_status,
         db_message=db_message,
+        # ★真偽値だけを渡している(利用者そのものは渡さない)。
+        #   画面に名前を出すと current_user.username を読むことになり、チームが
+        #   Userの項目名を変えた日にデモの表示が欠ける。
+        #   「ログイン中か」だけならFlask-Loginの機能なので絶対に壊れない。
+        logged_in=current_user.is_authenticated,
     )
 
 

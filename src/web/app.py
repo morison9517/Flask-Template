@@ -26,6 +26,15 @@ def create_app(config_class=None) -> Flask:
     # 指定がなければ .env の FLASK_ENV を見て自動で設定を選ぶ。
     app.config.from_object(config_class or get_config())
 
+    # ★JSONで日本語をそのまま読める形で返す設定。
+    #   これが無いと、jsonify した日本語が次のような記号の羅列で返る:
+    #       {"title": "\u725b\u4e73"}
+    #   JavaScriptは問題なく読めるので動作に影響はないが、
+    #   ブラウザの開発者ツールで中身を確認するときに読めず、
+    #   「文字化けしている」と勘違いして原因調査が遠回りになる。
+    #   (Django版は demo/api.py で、Gin版はGoが標準でこの形になっている)
+    app.json.ensure_ascii = False
+
     # extensions.py で箱だけ作っておいた道具に、接続先を教える。
     db.init_app(app)
     login_manager.init_app(app)
@@ -40,7 +49,7 @@ def create_app(config_class=None) -> Flask:
     #   お互いを待ち続ける状態になる。ここなら db の準備が済んでいて安全。
     #
     # ★import するだけでいい理由
-    #   読み込んだ瞬間にSQLAlchemyが「User と Todo という表がある」と覚える。
+    #   読み込んだ瞬間にSQLAlchemyが「User という表がある」と覚える。
     #   覚えさせないと create_all() が作る表を見つけられない。
     #   使っていないように見えても消さない。
     from web import models  # noqa: F401

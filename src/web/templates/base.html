@@ -35,8 +35,10 @@
     <meta name="csrf-token" content="{{ csrf_token() }}" />
 
     {# 各ページから title を渡せば「ホーム | Flask Template Demo」になり、
-       渡さなければ「Hack App」だけになる。 #}
-    <title>{% if title %}{{ title }} | {% endif %}Flask Template Demo</title>
+       渡さなければサイト名だけになる。
+       ★サイト名は config.py の SITE_NAME で決めている。名前を変えるときは
+         そこ1か所を直せば、全ページのタイトルとヘッダーに反映される。 #}
+    <title>{% if title %}{{ title }} | {% endif %}{{ config.SITE_NAME }}</title>
 
     {# ▼ url_for('static', filename=...) を使う理由
        "/static/css/style.css" と直書きしても動くが、url_for なら
@@ -56,7 +58,7 @@
 
            トップ以外のページは url_for('main.○○') のように名前で呼ぶこと。
            URL文字列を直書きしなければ、後からURLを変えても呼び出し側を直さずに済む。 #}
-        <a class="site-title" href="/">Flask Template Demo</a>
+        <a class="site-title" href="/">{{ config.SITE_NAME }}</a>
 
         <nav class="site-nav">
           {# config.AUTH_ENABLED = config.py の設定値。テンプレートから直接読める。

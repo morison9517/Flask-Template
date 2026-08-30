@@ -34,6 +34,11 @@ def _env_bool(key: str, default: bool = False) -> bool:
 class Config:
     """全モード共通の設定。"""
 
+    # ★プロダクト名が決まったらここを変える。
+    #   全ページのタイトルとヘッダーに反映される(base.html から読んでいる)。
+    #   HTMLに直書きすると、名前を変えるときに探し回ることになる。
+    SITE_NAME = "Flask Template Demo"
+
     # ログイン状態をブラウザに預けるときの割り印。
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-me")
 

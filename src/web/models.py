@@ -66,44 +66,33 @@ class User(UserMixin, db.Model):
 
 
 # =============================================================================
-# 以下はサンプル。プロダクトが決まったら Todo を消して
-# 自分たちの表(Post、Room、Message など)に書き換える。
+# ★ここから書きはじめる
+#
+#   class Post(db.Model):
+#       __tablename__ = "posts"
+#
+#       id = db.Column(db.Integer, primary_key=True)
+#       title = db.Column(db.String(200), nullable=False)
+#       created_at = db.Column(db.DateTime, server_default=db.func.now())
+#
+#       # ▼ 他の表と紐付けたいとき(「この投稿は誰が書いたか」)
+#       #
+#       #   ForeignKey        … 「この番号は users 表の id のこと」という紐付け
+#       #   ondelete=CASCADE  … ユーザーが消えたら、その人の投稿も一緒に消す
+#       #   nullable=True     … 持ち主なしでも保存できる
+#       #                       (ログイン機能をOFFにしても動く)
+#       user_id = db.Column(
+#           db.Integer,
+#           db.ForeignKey("users.id", ondelete="CASCADE"),
+#           nullable=True,
+#       )
+#
+#       # relationship = 番号から実物を引くショートカット。post.user で作者が取れる。
+#       # backref="posts" の効果で、逆に user.posts で一覧も取れる。
+#       user = db.relationship(
+#           "User", backref=db.backref("posts", cascade="all, delete")
+#       )
 # =============================================================================
-
-
-class Todo(db.Model):
-    """やることリスト1件分(サンプル)。"""
-
-    __tablename__ = "todos"
-
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200), nullable=False)
-    is_done = db.Column(db.Boolean, default=False, nullable=False)
-    created_at = db.Column(db.DateTime, server_default=db.func.now(), nullable=False)
-
-    # ForeignKey = 「この番号は users 表の id のこと」という紐付け。
-    # ondelete="CASCADE" = ユーザーが消えたら、その人のTodoも一緒に消す。
-    # nullable=True なので、ログイン機能を使わない場合は空でも動く。
-    user_id = db.Column(
-        db.Integer,
-        db.ForeignKey("users.id", ondelete="CASCADE"),
-        nullable=True,
-    )
-
-    # relationship = 番号から実物を引くショートカット。todo.user で作者が取れる。
-    # backref="todos" の効果で、逆に user.todos でその人のTodo一覧も取れる。
-    user = db.relationship("User", backref=db.backref("todos", cascade="all, delete"))
-
-    def to_dict(self) -> dict:
-        return {
-            "id": self.id,
-            "title": self.title,
-            "is_done": self.is_done,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
-        }
-
-    def __repr__(self) -> str:
-        return f"<Todo {self.id}: {self.title}>"
 
 
 # ブラウザには「あなたは3番の人」というメモだけが保存されている。

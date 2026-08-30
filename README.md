@@ -37,7 +37,7 @@ docker compose exec web flask init-db
 | --- | --- |
 | 出る条件 | 開発モード **かつ** `src/web/routes.py` にまだ `"/"` が無いとき |
 | 消える条件 | `routes.py` に `"/"` を1つ書く(それだけ) |
-| 本番 | `FLASK_ENV=production` では最初から出ない |
+| 本番 | `FLASK_ENV=production` では最初から出ない。デモ用の表もDBに作られない |
 | あとで見たい | `/__demo` で開ける(開発モードのときだけ) |
 
 ```python
@@ -46,6 +46,11 @@ docker compose exec web flask init-db
 def index():
     return render_template("index.html", title="ホーム")
 ```
+
+デモの画面は**1枚で完結しています**(`base.html` も `style.css` も `main.js` も使いません)。
+デモの役目は「セットアップが動いているか」を見せる計器なので、共通ファイルに頼らせていません。
+おかげで `base.html` を自分たちの見た目に作り替えても、この計器だけは最後まで正しく動きます。
+ページの書き方の見本は `src/web/templates/login.html` を見てください(`base.html` を継いだ本物のページです)。
 
 デモ一式は `src/web/demo/` にまとまっています。不要になったらフォルダごと削除して、`app.py` の「デモ」の3行を消してください。
 
@@ -78,6 +83,7 @@ case_flask/
 │   ├── routes.py           画面を返す受付。URL → HTML
 │   ├── auth/               ログイン・新規登録
 │   ├── demo/               動作確認用のデモページ(開発モード限定・触らない)
+│   │                       1枚完結なので、書き方の見本は login.html を見ること
 │   ├── templates/          お客さんが見るHTML(base.html が共通の型紙)
 │   └── static/             CSS / JS / 画像
 │
