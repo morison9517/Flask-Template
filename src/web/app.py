@@ -11,7 +11,8 @@
 #     ここを触るのは「新しい島(Blueprint)を増やしたとき」だけ。
 # =============================================================================
 
-from flask import Flask
+from flask import Flask, send_from_directory
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from web.config import get_config
 from web.extensions import csrf, db, login_manager
@@ -56,8 +57,52 @@ def create_app(config_class=None) -> Flask:
 
     _register_blueprints(app)
     _register_commands(app)
+    _register_media(app)
+    _trust_proxy(app)
 
     return app
+
+
+def _trust_proxy(app: Flask) -> None:
+    """Nginxが教えてくれる「本当の情報」を信用する設定。
+
+    ▼ ★これが無いと本番でおかしくなる
+
+      本番では Nginx が前に立つので、Flaskから見た相手は Nginx になる。
+      アクセス元のIPも、HTTPSで来たのかどうかも、全部 Nginx のものに見える。
+
+      郵便に例えると、転送されてきた手紙の差出人が
+      「転送してくれた人」になってしまう状態です。
+      本当の差出人は封筒の隅(ヘッダー)に書いてあるので、そこを読む設定です。
+
+      これを入れないと、HTTPSでアクセスしているのに Flask が「HTTPだ」と
+      思い込み、フォームの送信が弾かれたり、リンクが http:// で作られたりする。
+
+    ▼ 開発中は入れない
+
+      Nginx がいないので、教えてくれる人もいない。
+      それどころか、この設定を入れたまま外に晒すと、
+      利用者が自分でヘッダーを詐称してIPを偽れてしまう。
+      ★「間に信用できる人が1人だけいる」ときにだけ有効にすること。
+    """
+    if not app.config.get("DEBUG"):
+        # x_for=1 / x_proto=1 = 「手前に1台だけ信用できるNginxがいる」という意味。
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+
+
+def _register_media(app: Flask) -> None:
+    """利用者が上げたファイル(プロフィールアイコンなど)を配る口。
+
+    ★開発モードのときだけ登録する。
+      本番ではNginxが配るので、ここは登録しない(compose.prod.yml 参照)。
+      Flaskに画像配りをさせると遅いうえ、本番では動かないようにしてある。
+    """
+    if not app.config.get("DEBUG"):
+        return
+
+    @app.get("/media/<path:filename>")
+    def media(filename):
+        return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
 
 def _register_blueprints(app: Flask) -> None:

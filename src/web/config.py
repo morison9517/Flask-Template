@@ -71,7 +71,21 @@ class Config:
     TEMPLATES_AUTO_RELOAD = True
 
     # アップロード上限16MB。上限が無いと巨大ファイルでサーバーが落ちる。
+    # ★Nginx側(docker/nginx/prod.conf)の client_max_body_size と同じ値にすること。
+    #   片方だけ大きくしても意味がなく、「なぜか大きい画像だけ失敗する」になる。
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024
+
+    # ▼ 利用者が上げたファイル(プロフィールアイコンなど)の保存先
+    #
+    #   ★static と分ける理由
+    #     static … 自分たちが用意したファイル(CSS・JS・ロゴ)。Gitに入れる。
+    #     media  … 利用者が後から上げたファイル。Gitに入れない。
+    #
+    #     static は箱を作り直せば元通りだが、media は消したら二度と戻らない。
+    #     だから本番では media だけを箱の外の保管庫に置く(compose.prod.yml 参照)。
+    #
+    #   プロジェクトの入口(compose.ymlのある場所)から見た位置。
+    UPLOAD_FOLDER = str(BASE_DIR / "media")
 
 
 class DevConfig(Config):
@@ -85,9 +99,23 @@ class ProdConfig(Config):
 
     DEBUG = False  # エラーの中身を外部に見せない(攻撃の材料になる)
 
-    SESSION_COOKIE_SECURE = True  # HTTPSでのみCookieを送る
     SESSION_COOKIE_HTTPONLY = True  # JavaScriptから読めないようにする
     SESSION_COOKIE_SAMESITE = "Lax"  # 他サイトから勝手に使われるのを防ぐ
+
+    # ▼ ★ここが本番でいちばんハマる設定
+    #
+    #   True にすると「HTTPSのときだけログイン状態を持ち歩く」という意味になる。
+    #   本番は必ずHTTPSにするので True が正解。
+    #
+    #   ★ただし、まだHTTPSにしていない状態(http:// のまま)で True にすると、
+    #     ログイン自体は成功しているのに、次のページで必ずログイン画面に
+    #     戻されます。エラーも出ないので原因がまず分かりません。
+    #     「ログインできない」と思ったら、まずここを疑ってください。
+    #
+    #   デプロイの練習でHTTPのまま動かすときだけ、.env に
+    #       FLASK_SECURE_COOKIES=False
+    #   と書いて一時的に切ってください。★HTTPSにしたら必ず True に戻すこと。
+    SESSION_COOKIE_SECURE = _env_bool("FLASK_SECURE_COOKIES", True)
 
 
 CONFIG_MAP = {

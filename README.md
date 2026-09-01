@@ -138,3 +138,5 @@ case_flask/
 ## ドキュメント
 
 - **[docs/SETUP.md](docs/SETUP.md)** — 環境構築、日々の操作、DBeaverでの接続、困ったときの対処
+- **[docs/Pyhelp.md](docs/Pyhelp.md)** — Pythonの書き方(コーディング経験者向けの早わかり)
+- **[docs/DEPLOY.md](docs/DEPLOY.md)** — 本番に出す手順
