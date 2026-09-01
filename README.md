@@ -37,7 +37,7 @@ docker compose exec web flask init-db
 | --- | --- |
 | 出る条件 | 開発モード **かつ** `src/web/routes.py` にまだ `"/"` が無いとき |
 | 消える条件 | `routes.py` に `"/"` を1つ書く(それだけ) |
-| 本番 | `FLASK_ENV=production` では最初から出ない。デモ用の表もDBに作られない |
+| 本番 | `FLASK_ENV=production` では最初から出ない。デモ用の表(`demo_todos`)もDBに作られない |
 | あとで見たい | `/__demo` で開ける(開発モードのときだけ) |
 
 ```python
@@ -64,7 +64,8 @@ def index():
 | バック | Flask 3 / SQLAlchemy |
 | DB | MySQL 8.4(確認は DBeaver、ポートは **3307**) |
 | 環境 | Docker Compose |
-| 本番 | Nginx / AWS |
+| 本番 | Nginx / gunicorn / AWS(**`compose.prod.yml` に構成済み**) |
+| 画像 | Pillow(送られてきたファイルが本当に画像か確かめる用) |
 | 部品管理 | uv |
 
 ---
@@ -87,10 +88,14 @@ case_flask/
 │   ├── templates/          お客さんが見るHTML(base.html が共通の型紙)
 │   └── static/             CSS / JS / 画像
 │
-├── docs/                   チームで見る手順書
+├── media/                  利用者が上げたファイル(★中身はGitHubに上げない)
+│
+├── docs/                   チームで見る手順書(SETUP / Pyhelp / DEPLOY)
 ├── tools/                  開発中だけ使う小道具スクリプト
 │
-├── compose.yml             アプリとDBをまとめて動かす段取り表
+├── compose.yml             アプリとDBをまとめて動かす段取り表(開発用)
+├── compose.prod.yml        本番用の段取り表(★開発中は使わない)
+├── docker/nginx/           本番でCSSと画像を配るNginxの設定
 ├── Dockerfile              箱を組み立てるレシピ
 ├── pyproject.toml          買い物リスト(必要な部品の一覧)
 ├── uv.lock                 レシート(全員が同じバージョンを使うための記録)
@@ -120,6 +125,78 @@ case_flask/
 
 ---
 
+## ページを1枚増やす手順
+
+1. **`src/web/templates/` にHTMLを1枚置く**(`login.html` をコピーするのが早い)
+
+   ```html
+   {% extends "base.html" %}
+
+   {% block content %}
+   <h1>マイページ</h1>
+   {% endblock %}
+   ```
+
+   > ヘッダーとフッターは書きません。`base.html` から自動的に付きます。
+
+2. **`src/web/routes.py` に関数を1つ書く**
+
+   ```python
+   @main_bp.get("/mypage")
+   def my_page():
+       return render_template("mypage.html", title="マイページ")
+   ```
+
+3. 保存して2〜3秒待つ → <http://localhost:5000/mypage>
+
+ログインしている人だけに見せたいときは、1行足すだけです。
+
+```python
+from flask_login import login_required
+
+@main_bp.get("/mypage")
+@login_required          # ← これを足す
+def my_page():
+    ...
+```
+
+---
+
+## base.html(型紙)の仕組み
+
+ヘッダーとフッターを全ページにコピペすると、直すときに全ファイルを回ることになります。
+そこで**共通部分を1枚の「型紙」にまとめ、各ページは真ん中の中身だけを書く**形にしています。
+
+```
+base.html(型紙)                    mypage.html(中身)
+┌──────────────────┐
+│ ヘッダー          │
+├──────────────────┤
+│                  │  ←──  {% block content %}
+│  ここが穴         │            <h1>マイページ</h1>
+│                  │        {% endblock %}
+├──────────────────┤
+│ フッター          │
+└──────────────────┘
+```
+
+穴は3つ用意してあります。
+
+| 穴の名前 | 用途 |
+| --- | --- |
+| `content` | ページの本体(必須) |
+| `head_extra` | そのページだけで使うCSS |
+| `scripts` | そのページだけで使うJS |
+
+**ヘッダーを直したいときは `base.html` を1枚直すだけ**で、全ページに反映されます。
+
+> ★つまずきやすい点が2つあります。
+>
+> 1. `{% extends %}` は**必ず1行目**
+> 2. `{% block content %}` の**外に書いたものは表示されない**(エラーも出ない)
+
+---
+
 ## よく使うコマンド
 
 | やりたいこと | コマンド |
@@ -132,6 +209,29 @@ case_flask/
 | DBを作り直す | `docker compose exec web flask drop-db` してから `init-db` |
 | 箱の中に入る | `docker compose exec web bash` |
 | 書き方をチェック | `docker compose exec web ruff check src/` |
+
+---
+
+## 3つのテンプレートの対応表
+
+同じ構成・同じ画面で作ってあるので、1つ分かれば他も読めます。
+
+| やること | Flask版 | Gin版 | Django版 |
+| --- | --- | --- | --- |
+| 起動の入口 | `src/web/app.py` | `cmd/server/main.go` | `manage.py` + `config/` |
+| 設定 | `config.py` | `internal/config/` | `config/settings.py` |
+| データの形 | `models.py` | `internal/models/` | `main/models.py` |
+| 画面を返す | `routes.py` | `handlers/page.go` | `main/views.py` |
+| ログイン | `auth/routes.py` | `handlers/auth.go` | `accounts/views.py` |
+| 型紙 | `base.html`(Jinja) | `base.html`(Go) | `base.html`(Django) |
+| 表を作る | `flask init-db` | 起動時に自動 | 起動時に自動 |
+| 表の形を変える | 作り直し(データ消滅) | 列の追加のみ可 | **データを保ったまま変更可** |
+| 管理画面 | 無い | 無い | **`/admin/`** |
+| アプリのポート | 5000 | 8080 | 8000 |
+| DBのポート | 3307 | 3308 | 3309 |
+| 本番イメージ | 438MB | **48MB** | 913MB |
+
+> ポートをずらしてあるので、**3つ同時に起動しても衝突しません。**
 
 ---
 
