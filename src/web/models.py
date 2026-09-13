@@ -66,6 +66,46 @@ class User(UserMixin, db.Model):
 
 
 # =============================================================================
+# LoginAttempt = ログインの失敗を数えておく表
+#
+#   数え方と締め出しの判断は loginlimit.py。ここは置き場所の形だけ。
+#
+#   ▼ ★なぜアプリの中の変数ではなくDBに置くのか
+#
+#     本番では gunicorn が3つのプロセスでアプリを動かす(Dockerfile の
+#     --workers 3)。変数に数えるとプロセスごとに別々に数えるので、
+#     「5回まで」のつもりが実質15回になる。
+#     ★見た目は動いているのに効いていない、という最悪の形になる。
+# =============================================================================
+class LoginAttempt(db.Model):
+    __tablename__ = "login_attempts"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    # ★「アカウントごと」ではなく「アクセス元ごと」に数える。
+    #   アカウントごとだと、他人がわざと5回間違えるだけで本人が締め出される。
+    #
+    # String(45) … IPv6 のいちばん長い形が45文字。足りないと保存に失敗する。
+    ip = db.Column(db.String(45), unique=True, nullable=False)
+
+    # 続けて失敗した回数。1回でも成功したら記録ごと消える。
+    count = db.Column(db.Integer, nullable=False, default=0)
+
+    # 最後に失敗した時刻。古い記録を捨てる判断に使う。
+    last_failure_at = db.Column(db.DateTime, nullable=False)
+
+    # この時刻まで締め出す。
+    #
+    # ★nullable=True が必要。「失敗を数えている途中」を表すため。
+    #   空にできないと未設定を時刻で表すしかなくなり、必ず
+    #   「もう過ぎている」と判定されて締め出しが働かない。
+    locked_until = db.Column(db.DateTime, nullable=True)
+
+    def __repr__(self) -> str:
+        return f"<LoginAttempt {self.ip}: {self.count}回>"
+
+
+# =============================================================================
 # ★ここから書きはじめる
 #
 #   class Post(db.Model):
@@ -75,20 +115,16 @@ class User(UserMixin, db.Model):
 #       title = db.Column(db.String(200), nullable=False)
 #       created_at = db.Column(db.DateTime, server_default=db.func.now())
 #
-#       # ▼ 他の表と紐付けたいとき(「この投稿は誰が書いたか」)
-#       #
-#       #   ForeignKey        … 「この番号は users 表の id のこと」という紐付け
-#       #   ondelete=CASCADE  … ユーザーが消えたら、その人の投稿も一緒に消す
-#       #   nullable=True     … 持ち主なしでも保存できる
-#       #                       (ログイン機能をOFFにしても動く)
+#       # nullable=True にすると持ち主なしでも保存できる
+#       # (ログイン機能をOFFにしても動く)。
+#       # ondelete=CASCADE = ユーザーが消えたら投稿も一緒に消す。
 #       user_id = db.Column(
 #           db.Integer,
 #           db.ForeignKey("users.id", ondelete="CASCADE"),
 #           nullable=True,
 #       )
 #
-#       # relationship = 番号から実物を引くショートカット。post.user で作者が取れる。
-#       # backref="posts" の効果で、逆に user.posts で一覧も取れる。
+#       # post.user で作者、user.posts で一覧が取れるようになる。
 #       user = db.relationship(
 #           "User", backref=db.backref("posts", cascade="all, delete")
 #       )

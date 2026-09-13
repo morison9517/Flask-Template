@@ -82,11 +82,16 @@ case_flask/
 │   ├── extensions.py       共用の道具(DB・ログイン管理・CSRF)
 │   ├── models.py           データの形(DBの表)を決める
 │   ├── routes.py           画面を返す受付。URL → HTML
+│   ├── errors.py           エラー画面(404など)。文言の表はここ
+│   ├── loginlimit.py       ログインの失敗回数を数えて締め出す
+│   ├── seo.py              検索・SNSでの見え方、robots.txt、favicon
 │   ├── auth/               ログイン・新規登録
 │   ├── demo/               動作確認用のデモページ(開発モード限定・触らない)
 │   │                       1枚完結なので、書き方の見本は login.html を見ること
 │   ├── templates/          お客さんが見るHTML(base.html が共通の型紙)
+│   │                       error.html は404などで使う共通の1枚
 │   └── static/             CSS / JS / 画像
+│                           robots.txt もここ(サイト直下に出している)
 │
 ├── media/                  利用者が上げたファイル(★中身はGitHubに上げない)
 │
@@ -95,7 +100,10 @@ case_flask/
 │
 ├── compose.yml             アプリとDBをまとめて動かす段取り表(開発用)
 ├── compose.prod.yml        本番用の段取り表(★開発中は使わない)
-├── docker/nginx/           本番でCSSと画像を配るNginxの設定
+├── docker/nginx/           本番のNginxの設定(3枚)
+│   ├── app.inc               中身の設定。下の2枚から読み込む1枚
+│   ├── prod.conf             HTTPのまま動かすとき(最初はこちら)
+│   └── prod-https.conf       証明書を取った後
 ├── Dockerfile              箱を組み立てるレシピ
 ├── pyproject.toml          買い物リスト(必要な部品の一覧)
 ├── uv.lock                 レシート(全員が同じバージョンを使うための記録)
@@ -120,8 +128,10 @@ case_flask/
 | データの形 | `src/web/models.py` |
 | URLと処理 | `src/web/routes.py` |
 | ログイン | `src/web/auth/` |
+| エラーページの文言 | `src/web/errors.py` |
+| サイト名・説明文 | `src/web/config.py` |
 
-`app.py` `extensions.py` `config.py` `compose.yml` `Dockerfile` は**土台**です。
+`app.py` `extensions.py` `compose.yml` `Dockerfile` は**土台**です。
 触る必要が出たら、**先にチームに共有してから**変更してください(全員に影響します)。
 
 ---
@@ -213,6 +223,23 @@ base.html(型紙)                    mypage.html(中身)
 
 ---
 
+## 公開するときに要るものは、入れてあります
+
+**身内に見せるだけなら要らないが、外に出すと必ず要るもの**を最初から入れてあります。
+どれも**設定しなくても動き**、**要らなければファイルを消せば外れます。**
+
+| 入っているもの | 設定しないとどうなるか | いじる場所 |
+| --- | --- | --- |
+| **エラーページ**(404/500) | そのまま使える | 文言の表1つ(`src/web/errors.py`) |
+| **ログイン試行制限** | そのまま使える(5回失敗で15分) | 回数と時間の定数(`src/web/loginlimit.py`) |
+| **検索・SNSでの見え方** | そのまま使える。説明文は書き換える | サイト名と説明文(`config.py`) |
+| **HTTPS** | HTTPで動く。設定は用意済み | 設定を1行差し替え([docs/DEPLOY.md](docs/DEPLOY.md)) |
+
+> エラーページは `/__error/404` で確認できます(**本番では登録されません**)。
+> 開発中は本物のエラーでは出ないので、見た目はここで確かめてください。
+
+---
+
 ## 3つのテンプレートの対応表
 
 同じ構成・同じ画面で作ってあるので、1つ分かれば他も読めます。
@@ -224,6 +251,9 @@ base.html(型紙)                    mypage.html(中身)
 | データの形 | `models.py` | `internal/models/` | `main/models.py` |
 | 画面を返す | `routes.py` | `handlers/page.go` | `main/views.py` |
 | ログイン | `auth/routes.py` | `handlers/auth.go` | `accounts/views.py` |
+| ログイン試行制限 | `loginlimit.py` | `handlers/loginlimit.go` | `accounts/loginlimit.py` |
+| エラーページ | `errors.py` | `handlers/error.go` | `main/errors.py` |
+| 検索・SNS対応 | `seo.py` | `internal/view/page.go` | `main/context_processors.py` |
 | 型紙 | `base.html`(Jinja) | `base.html`(Go) | `base.html`(Django) |
 | 表を作る | `flask init-db` | 起動時に自動 | 起動時に自動 |
 | 表の形を変える | 作り直し(データ消滅) | 列の追加のみ可 | **データを保ったまま変更可** |

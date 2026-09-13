@@ -39,6 +39,21 @@ class Config:
     #   HTMLに直書きすると、名前を変えるときに探し回ることになる。
     SITE_NAME = "Flask Template Demo"
 
+    # ★検索結果でタイトルの下に出る2行。SNSに貼ったときの説明文にもなる。
+    #   120文字前後に収めること。長いと検索結果で途中から切られる。
+    #   ページごとに変えたいときは、render_template に description="..." を渡す。
+    SITE_DESCRIPTION = (
+        "Flaskのハッカソン用テンプレート。docker compose up だけで開発環境が立ち上がります。"
+    )
+
+    # SNSに貼ったときに出るサムネイル画像。
+    #
+    # ★空のときは画像用のタグを出さない。画像が無いのにタグだけ出すと、
+    #   SNS側が「画像が取れない」と判断してカードが小さいまま表示される。
+    # 用意するとき: 1200x630 の画像を static/images/ogp.png に置き、
+    #               ここを "/static/images/ogp.png" にする。
+    OGP_IMAGE = ""
+
     # ログイン状態をブラウザに預けるときの割り印。
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-me")
 
@@ -75,16 +90,11 @@ class Config:
     #   片方だけ大きくしても意味がなく、「なぜか大きい画像だけ失敗する」になる。
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024
 
-    # ▼ 利用者が上げたファイル(プロフィールアイコンなど)の保存先
+    # 利用者が上げたファイルの保存先。
     #
-    #   ★static と分ける理由
-    #     static … 自分たちが用意したファイル(CSS・JS・ロゴ)。Gitに入れる。
-    #     media  … 利用者が後から上げたファイル。Gitに入れない。
-    #
-    #     static は箱を作り直せば元通りだが、media は消したら二度と戻らない。
-    #     だから本番では media だけを箱の外の保管庫に置く(compose.prod.yml 参照)。
-    #
-    #   プロジェクトの入口(compose.ymlのある場所)から見た位置。
+    # ★static と分ける理由: static は自分たちが用意したものでGitに入れる。
+    #   media は利用者が上げたもので、消したら戻らない。
+    #   だから本番では media だけを箱の外の保管庫に置く。
     UPLOAD_FOLDER = str(BASE_DIR / "media")
 
 
@@ -102,19 +112,13 @@ class ProdConfig(Config):
     SESSION_COOKIE_HTTPONLY = True  # JavaScriptから読めないようにする
     SESSION_COOKIE_SAMESITE = "Lax"  # 他サイトから勝手に使われるのを防ぐ
 
-    # ▼ ★ここが本番でいちばんハマる設定
+    # ▼ ★本番でいちばんハマる設定
     #
-    #   True にすると「HTTPSのときだけログイン状態を持ち歩く」という意味になる。
-    #   本番は必ずHTTPSにするので True が正解。
+    #   True = HTTPSのときだけログイン状態を持ち歩く。本番は True が正解。
     #
-    #   ★ただし、まだHTTPSにしていない状態(http:// のまま)で True にすると、
-    #     ログイン自体は成功しているのに、次のページで必ずログイン画面に
-    #     戻されます。エラーも出ないので原因がまず分かりません。
-    #     「ログインできない」と思ったら、まずここを疑ってください。
-    #
-    #   デプロイの練習でHTTPのまま動かすときだけ、.env に
-    #       FLASK_SECURE_COOKIES=False
-    #   と書いて一時的に切ってください。★HTTPSにしたら必ず True に戻すこと。
+    #   ★HTTPのまま True にすると、ログインは成功しているのに次のページで
+    #     必ずログイン画面に戻される。エラーも出ないので原因が分からない。
+    #     練習中だけ .env に FLASK_SECURE_COOKIES=False と書いて切る。
     SESSION_COOKIE_SECURE = _env_bool("FLASK_SECURE_COOKIES", True)
 
 

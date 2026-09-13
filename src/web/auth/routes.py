@@ -18,6 +18,14 @@ from flask_login import current_user, login_required, login_user, logout_user
 
 from web.auth import auth_bp
 from web.extensions import db
+from web.loginlimit import (
+    clear_failures,
+    client_ip,
+    lock_remaining,
+    minutes_to_wait,
+    record_failure,
+    remaining_attempts,
+)
 from web.models import User
 
 
@@ -112,6 +120,25 @@ def login():
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
 
+        # ▼ ★何度も失敗している相手は、照合する前に追い返す
+        #
+        #   仕組みは loginlimit.py。パスワードを見る前に止めるのが要点。
+        #   ここを照合の後ろに置くと、締め出し中でも1回ずつ試させてしまい、
+        #   時間をかければ当てられる状態のままになる。
+        ip = client_ip()
+
+        remaining = lock_remaining(ip)
+        if remaining is not None:
+            minutes = minutes_to_wait(remaining)
+
+            flash(
+                "ログインの失敗が続いたため、一時的に制限しています。"
+                f"あと約{minutes}分お待ちください。",
+                "error",
+            )
+            # 429 = 「回数が多すぎる」を表す番号。
+            return render_template("login.html", title="ログイン", username=username), 429
+
         user = User.query.filter_by(username=username).first()
 
         # ★「ユーザー名が違います」と書かない理由
@@ -119,8 +146,39 @@ def login():
         #   user が None のとき check_password を呼ぶと落ちるので、
         #   「user が居る かつ パスワードが合う」の順に確認する。
         if user is None or not user.check_password(password):
-            flash("ユーザー名またはパスワードが正しくありません。", "error")
-            return render_template("login.html", title="ログイン", username=username)
+            # 失敗を1回数える。5回目でこのアクセス元は15分締め出される。
+            record_failure(ip)
+
+            message = "ユーザー名またはパスワードが正しくありません。"
+            status = 200
+
+            # ★今の失敗で締め出しに達したかを、その場で確かめて伝える。
+            #
+            #   これが無いと、5回目は普通の「違います」だけが出て、
+            #   次にもう一度押したときに初めて締め出しを知ることになる。
+            #   利用者から見ると「急に入れなくなった」としか分からない。
+            reached = lock_remaining(ip)
+            if reached is not None:
+                minutes = minutes_to_wait(reached)
+                message = (
+                    "ログインの失敗が続いたため、一時的に制限しました。"
+                    f"あと約{minutes}分お待ちください。"
+                )
+                status = 429
+            else:
+                # ★残り回数を出す理由は loginlimit.py の remaining_attempts に。
+                #   残り2回以下になってから出す(最初から出すと不安にさせるだけ)。
+                left = remaining_attempts(ip)
+                if 0 < left <= 2:
+                    message += f"(あと{left}回失敗すると、しばらくログインできなくなります)"
+
+            flash(message, "error")
+            return render_template("login.html", title="ログイン", username=username), status
+
+        # ★成功したら失敗の記録を消す。
+        #   これが無いと、正しく入れた後も前の失敗が残り続け、
+        #   次に1回打ち間違えただけで締め出される。
+        clear_failures(ip)
 
         # login_user() がブラウザに「あなたは○番の人」というメモを持たせる。
         # remember=True でブラウザを閉じてもログイン状態が続く(デモ時に便利)。
