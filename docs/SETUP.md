@@ -47,8 +47,7 @@ Copy-Item .env.example .env
 cp .env.example .env
 ```
 
-そのあと、`.env` の中身をチームで共有されたものに合わせてください。
-**開発中はコピーしたままの値でも動きます。**
+**開発中はコピーしたままの値で動きます。** 何も書き換える必要はありません。
 
 ### ③ 箱を組み立てて起動する
 
@@ -148,8 +147,8 @@ docker compose exec web flask drop-db
 docker compose exec web flask init-db
 ```
 
-> ⚠️ **中のデータは全部消えます。** ハッカソン中はこれが一番早くて確実です。
-> (本番運用ではデータを保ったまま形を変える方法を使いますが、今回は不要です)
+> ⚠️ **中のデータは全部消えます。** 開発中はこれが一番早くて確実です。
+> (本番に出した後は使えません。本番での扱いは [DEPLOY.md](DEPLOY.md) の「コードを直したとき」)
 
 ### DBがどうしてもおかしいとき(最終手段)
 
@@ -232,7 +231,7 @@ docker compose restart web
 
 3. **`pyproject.toml` と `uv.lock` をコミットしてpushする**
 
-> ⚠️ **これを共有しないと、他のメンバーの環境で `ModuleNotFoundError` が出ます。**
+> ⚠️ **これを共有しないと、他の人の環境で `ModuleNotFoundError` が出ます。**
 > pull した人は `docker compose exec web uv sync` を実行すれば揃います。
 
 ---
@@ -299,7 +298,7 @@ HTMLの `name="○○"` と、Pythonの `request.form.get("○○")` の**文字
 
 ### それでも分からないとき
 
-以下の3つをセットでチームに投げてください。**これが揃っていれば誰でも助けられます。**
+人に聞くときは、以下の3つをセットで伝えてください。**これが揃っていれば誰でも助けられます。**
 
 1. 何をしようとしたか
 2. `docker compose logs web` の最後20行

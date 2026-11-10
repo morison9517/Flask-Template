@@ -1,11 +1,14 @@
 # Flask Template Demo
 
-**Team AIB** のハッカソン用Flask開発テンプレート。
+Flask(Python)でWebアプリを作るための開発テンプレート。
 **`docker compose up` だけで、アプリとDBが揃った開発環境が立ち上がります。**
 
+ログイン・エラーページ・本番用の構成まで入っているので、**作りたいものの中身から書きはじめられます。**
+コードには「なぜそう書くか」の説明を付けてあり、Pythonが初めての人でも読み進められます。
+
 > リポジトリ名は `case_flask`、画面上の表示名は `Flask Template Demo` です。
-> プロダクト名が決まったら、表示名は `src/web/templates/base.html` の
-> `<title>` とヘッダーの2箇所を直してください。
+> プロダクト名が決まったら、表示名は `src/web/config.py` の
+> `SITE_NAME` の1か所を直してください(全ページのタイトルとヘッダーに反映されます)。
 
 ---
 
@@ -95,7 +98,7 @@ case_flask/
 │
 ├── media/                  利用者が上げたファイル(★中身はGitHubに上げない)
 │
-├── docs/                   チームで見る手順書(SETUP / Pyhelp / DEPLOY)
+├── docs/                   手順書(SETUP / Pyhelp / DEPLOY)
 ├── tools/                  開発中だけ使う小道具スクリプト
 │
 ├── compose.yml             アプリとDBをまとめて動かす段取り表(開発用)
@@ -119,7 +122,7 @@ case_flask/
 
 ## 担当ごとに触る場所
 
-**基本的に他の人と同じファイルを触らないように分けてあります。** これでコンフリクト(変更の取り合い)がほぼ起きません。
+複数人で作るときに、**他の人と同じファイルを触らずに済むよう分けてあります。** これでコンフリクト(変更の取り合い)がほぼ起きません。
 
 | 担当 | 触る場所 |
 | --- | --- |
@@ -132,7 +135,7 @@ case_flask/
 | サイト名・説明文 | `src/web/config.py` |
 
 `app.py` `extensions.py` `compose.yml` `Dockerfile` は**土台**です。
-触る必要が出たら、**先にチームに共有してから**変更してください(全員に影響します)。
+複数人で作っているときは、**先に共有してから**変更してください(全員に影響します)。
 
 ---
 
@@ -225,7 +228,7 @@ base.html(型紙)                    mypage.html(中身)
 
 ## 公開するときに要るものは、入れてあります
 
-**身内に見せるだけなら要らないが、外に出すと必ず要るもの**を最初から入れてあります。
+**手元で動かすだけなら要らないが、外に出すと必ず要るもの**を最初から入れてあります。
 どれも**設定しなくても動き**、**要らなければファイルを消せば外れます。**
 
 | 入っているもの | 設定しないとどうなるか | いじる場所 |
@@ -240,29 +243,33 @@ base.html(型紙)                    mypage.html(中身)
 
 ---
 
-## 3つのテンプレートの対応表
+## 4つのテンプレートの対応表
 
 同じ構成・同じ画面で作ってあるので、1つ分かれば他も読めます。
 
-| やること | Flask版 | Gin版 | Django版 |
-| --- | --- | --- | --- |
-| 起動の入口 | `src/web/app.py` | `cmd/server/main.go` | `manage.py` + `config/` |
-| 設定 | `config.py` | `internal/config/` | `config/settings.py` |
-| データの形 | `models.py` | `internal/models/` | `main/models.py` |
-| 画面を返す | `routes.py` | `handlers/page.go` | `main/views.py` |
-| ログイン | `auth/routes.py` | `handlers/auth.go` | `accounts/views.py` |
-| ログイン試行制限 | `loginlimit.py` | `handlers/loginlimit.go` | `accounts/loginlimit.py` |
-| エラーページ | `errors.py` | `handlers/error.go` | `main/errors.py` |
-| 検索・SNS対応 | `seo.py` | `internal/view/page.go` | `main/context_processors.py` |
-| 型紙 | `base.html`(Jinja) | `base.html`(Go) | `base.html`(Django) |
-| 表を作る | `flask init-db` | 起動時に自動 | 起動時に自動 |
-| 表の形を変える | 作り直し(データ消滅) | 列の追加のみ可 | **データを保ったまま変更可** |
-| 管理画面 | 無い | 無い | **`/admin/`** |
-| アプリのポート | 5000 | 8080 | 8000 |
-| DBのポート | 3307 | 3308 | 3309 |
-| 本番イメージ | 438MB | **48MB** | 913MB |
+| やること | Flask版 | Gin版 | Echo版 | Django版 |
+| --- | --- | --- | --- | --- |
+| 起動の入口 | `src/web/app.py` | `cmd/server/main.go` | `cmd/server/main.go` | `manage.py` + `config/` |
+| 設定 | `config.py` | `internal/config/` | `internal/config/` | `config/settings.py` |
+| データの形 | `models.py` | `internal/models/` | `internal/models/` | `main/models.py` |
+| 画面を返す | `routes.py` | `handlers/page.go` | `handlers/page.go` | `main/views.py` |
+| ログイン | `auth/routes.py` | `handlers/auth.go` | `handlers/auth.go` | `accounts/views.py` |
+| ログイン試行制限 | `loginlimit.py` | `handlers/loginlimit.go` | `handlers/loginlimit.go` | `accounts/loginlimit.py` |
+| エラーページ | `errors.py` | `handlers/error.go` | `handlers/error.go` | `main/errors.py` |
+| 検索・SNS対応 | `seo.py` | `internal/view/page.go` | `internal/view/page.go` | `main/context_processors.py` |
+| 型紙 | `base.html`(Jinja) | `base.html`(Go) | `base.html`(Go) | `base.html`(Django) |
+| 成りすまし対策 | Flask-WTF | 自前で実装 | Echo付属 | Django付属 |
+| 表を作る | `flask init-db` | 起動時に自動 | 起動時に自動 | 起動時に自動 |
+| 表の形を変える | 作り直し(データ消滅) | 列の追加のみ可 | 列の追加のみ可 | **データを保ったまま変更可** |
+| 管理画面 | 無い | 無い | 無い | **`/admin/`** |
+| アプリのポート | 5000 | 8080 | 1323 | 8000 |
+| DBのポート | 3307 | 3308 | 3310 | 3309 |
+| 本番イメージ | 438MB | 48MB | **32MB** | 913MB |
 
-> ポートをずらしてあるので、**3つ同時に起動しても衝突しません。**
+> ポートをずらしてあるので、**4つ同時に起動しても衝突しません。**
+
+> **Gin版とEcho版は、フォルダ構成も画面(HTML/CSS/JS)もまったく同じです。**
+> 違うのは Go のコードの書き方だけなので、2つを並べるとフレームワークの違いだけが見えます。
 
 ---
 

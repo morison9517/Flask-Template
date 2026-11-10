@@ -1,7 +1,7 @@
 [project]
 name = "case_flask"
 version = "0.1.0"
-description = "ハッカソン用テンプレート(Flask)"
+description = "Webアプリ開発テンプレート(Flask)"
 requires-python = ">=3.13"
 
 # ライブラリを増やすときは、ここに1行足してから

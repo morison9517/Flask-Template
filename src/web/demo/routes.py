@@ -29,7 +29,7 @@ def index():
         db_status=db_status,
         db_message=db_message,
         # ★真偽値だけを渡している(利用者そのものは渡さない)。
-        #   画面に名前を出すと current_user.username を読むことになり、チームが
+        #   画面に名前を出すと current_user.username を読むことになり、開発する人が
         #   Userの項目名を変えた日にデモの表示が欠ける。
         #   「ログイン中か」だけならFlask-Loginの機能なので絶対に壊れない。
         logged_in=current_user.is_authenticated,

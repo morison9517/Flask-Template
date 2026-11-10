@@ -28,7 +28,7 @@ class Todo(db.Model):
     """やることリスト1件分(デモ)。"""
 
     # ★表の名前に demo_ を付けている理由
-    #   "todos" のままだと、チームが自分たちのTodoを作った瞬間に
+    #   "todos" のままだと、開発する人が自分たちのTodoを作った瞬間に
     #   名前がぶつかって、アプリが起動しなくなる:
     #       InvalidRequestError: Table 'todos' is already defined
     #   デモが名前を1つ占領しないよう、必ず demo_ を付ける。
