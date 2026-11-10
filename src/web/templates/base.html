@@ -5,7 +5,7 @@
      content    … ページの本体(必須)
      scripts    … そのページ専用のJS
 
-   サイト名と説明文は config.py、検索・SNS向けの値は src/web/seo.py が用意している。
+   サイト名は config.py の SITE_NAME から読んでいる。
    ★渡していない値は空になるだけでエラーが出ない。「出ない」ときはまずそこを疑う。 #}
 <!DOCTYPE html>
 <html lang="ja">
@@ -16,24 +16,7 @@
 
     <title>{% if title %}{{ title }} | {% endif %}{{ config.SITE_NAME }}</title>
 
-    {% set page_description = description or config.SITE_DESCRIPTION %}
-
-    <meta name="description" content="{{ page_description }}" />
-    <link rel="canonical" href="{{ canonical_url }}" />
-
-    <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="{{ config.SITE_NAME }}" />
-    <meta property="og:title" content="{% if title %}{{ title }} | {% endif %}{{ config.SITE_NAME }}" />
-    <meta property="og:description" content="{{ page_description }}" />
-    <meta property="og:url" content="{{ canonical_url }}" />
-    <meta property="og:locale" content="ja_JP" />
-
-    {% if ogp_image %}
-    <meta property="og:image" content="{{ site_url }}{{ ogp_image }}" />
-    <meta name="twitter:card" content="summary_large_image" />
-    {% endif %}
-
-    <link rel="icon" href="/favicon.ico" />
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
 
     {% block head_extra %}{% endblock %}

@@ -5,7 +5,7 @@ description = "Webアプリ開発テンプレート(Flask)"
 requires-python = ">=3.13"
 
 # ライブラリを増やすときは、ここに1行足してから
-# docs/SETUP.md の「ライブラリを追加したいとき」を実行する。
+# docs/SETUP.md の「部品(ライブラリ)を足したいとき」を実行する。
 dependencies = [
     "Flask",
     "python-dotenv",      # .env から設定を読み込む

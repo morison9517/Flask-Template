@@ -1,11 +1,58 @@
-# 本番に出す手順
+# インターネットに公開する
 
-このファイルは**サーバーにアプリを載せるとき**に見る紙です。
-日々の開発は [SETUP.md](SETUP.md) を見てください。
+ここまで作ったアプリは、まだ**あなたのパソコンの中だけ**で動いています。
+このページは、それを**インターネット上のサーバーに載せて、誰でも見られるようにする**(=**デプロイする**)ための手順です。
 
-> ★**本番前に一度、必ず練習してください。**
-> ここに書いてある手順を、公開する当日に初めて打つのは危険です。
-> 一度通しておけば、当日は同じことを繰り返すだけになります。
+| あなたは | 読み方 |
+| --- | --- |
+| 🌱 公開ははじめて | [0. 公開に必要なもの](#0-公開に必要なもの) から順番に読んでください |
+| 🛠️ 経験がある | 下の **[経験者向けの要約](#経験者向けの要約)** だけで足ります。詰まったら [7. 困ったとき](#7-困ったとき) |
+
+> ★**本番の前に一度、必ず練習してください。**
+> ここに書いてある手順を、公開する当日に初めて打つのは危険です。一度通しておけば、当日は同じことを繰り返すだけです。
+
+---
+
+## 経験者向けの要約
+
+<details>
+<summary>開く</summary>
+
+- 構成:`compose.prod.yml` = Nginx(80/443)→ gunicorn(3 workers)→ MySQL 8.4(ポート非公開)
+- 静的ファイルは Nginx が `src/web/static` を直接配信(30日キャッシュ。URLには中身のハッシュが付く)。サーバー上にソースの clone が必要
+- 起動時に `flask init-db`(`db.create_all()`)が走る。マイグレーションは無いので、スキーマ変更は手作業か作り直し
+- `.env`:`FLASK_ENV=production` / `SECRET_KEY` / DBのパスワード / `HTTPS_DOMAIN`
+- HTTPS:certbot(webroot)で証明書を取得 → `.env` に `HTTPS_DOMAIN=ドメイン` → `up -d nginx`。証明書更新は cron で `certbot renew` + `nginx -s reload`
+- 1GB メモリのサーバー向けに MySQL のメモリ設定を絞ってある(`compose.prod.yml` の db の `command:`)
+
+```bash
+cp .env.example .env    # FLASK_ENV=production, SECRET_KEY, DB_PASSWORD を変更
+docker compose -f compose.prod.yml up -d --build
+docker compose -f compose.prod.yml run --rm certbot certonly --webroot -w /var/www/certbot -d <domain> --email <mail> --agree-tos --no-eff-email
+# .env に HTTPS_DOMAIN=<domain> を追記して
+docker compose -f compose.prod.yml up -d nginx
+```
+
+</details>
+
+---
+
+## 0. 公開に必要なもの
+
+公開には、パソコンの外に次の2つを用意します。
+
+| 必要なもの | 何か | 例えると | 費用の目安 |
+| --- | --- | --- | --- |
+| **サーバー** | 24時間動き続ける、インターネット上のコンピューター | お店を開く**テナント** | 月数百円〜(AWS の EC2、さくらのVPS など) |
+| **ドメイン** | `example.com` のような、インターネット上の名前 | お店の**住所と看板** | 年数百円〜数千円 |
+
+> **ドメインが無くても練習はできます。** サーバーの IP アドレス(`http://203.0.113.10` のような数字)で開けます。
+> ただし、鍵マーク付きの **HTTPS にするにはドメインが必要**です。
+
+サーバーには、**SSH** という方法でターミナルからつないで、コマンドを打ちます。
+サーバーの借り方と SSH のつなぎ方は、借りた会社の案内に必ず書いてあるので、それに従ってください。
+
+> ★サーバーは、**メモリ 1GB 以上**、OS は **Ubuntu** を選ぶと、この手順書のとおりに進められます。
 
 ---
 
@@ -28,6 +75,9 @@
 
 ### ① サーバーに Docker を入れる
 
+サーバーに SSH でつないだら、Docker の公式の手順(<https://docs.docker.com/engine/install/ubuntu/>)で入れます。
+入ったかどうかは、次の2行で確かめられます。
+
 ```bash
 docker version
 docker compose version
@@ -36,9 +86,13 @@ docker compose version
 ### ② コードを置く
 
 ```bash
-git clone <リポジトリのURL>
-cd case_flask
+git clone <あなたのリポジトリのURL>
+cd <できたフォルダ>
 ```
+
+> テンプレートそのものではなく、**あなたが作ったアプリのリポジトリ**を clone します。
+> GitHub に上げていない場合は、先に上げてください。GitHub の準備と push のやり方は
+> Progate の記事([Windows](https://prog-8.com/docs/git-env-win) / [Mac](https://prog-8.com/docs/git-env))の3〜5章にあります。
 
 ### ③ 金庫(`.env`)を作る
 
@@ -53,8 +107,12 @@ cp .env.example .env
 | `SECRET_KEY` | **長いランダムな文字列**(下のコマンドで作る) |
 | `FLASK_ENV` | `production` |
 | `DB_PASSWORD` / `DB_ROOT_PASSWORD` | **開発用と違うパスワード** |
+| `FLASK_SECURE_COOKIES` | HTTPS にするまでは `False`、**HTTPS にしたら `True`** |
 
-割り印(SECRET_KEY)はこれで作れます。
+> ★`.env` はサーバーの上で、`nano .env` のようにして書き換えます(保存は `Ctrl + O` → Enter、終了は `Ctrl + X`)。
+> 中身は**絶対に GitHub に上げない**でください。パスワードが世界中に見えてしまいます。
+
+`SECRET_KEY`(ログイン状態に押す**割り印**の鍵)は、これで作れます。
 
 ```bash
 python3 -c "import secrets; print(secrets.token_urlsafe(50))"
@@ -199,29 +257,15 @@ Successfully received certificate.
 
 と出れば成功です。証明書は `certbot_conf` の保管庫に入りました。
 
-### ④ HTTPS版の設定に切り替える
+### ④ HTTPSに切り替える
 
-**2か所です。**
+**`.env` に1行書くだけです。** 設定ファイルは書き換えません。
 
-1. `docker/nginx/prod-https.conf` の `example.com` を**自分のドメインに書き換える**
+```
+HTTPS_DOMAIN=自分のドメイン
+```
 
-   ```nginx
-   ssl_certificate     /etc/letsencrypt/live/example.com/fullchain.pem;
-   ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;
-   ```
-
-   ★ここの書き換え忘れが、HTTPS化でいちばん多いつまずきです。
-   証明書はあるのに Nginx が起動せず、原因が設定側にあると気づきにくい。
-
-2. `compose.prod.yml` の nginx の**1行を差し替える**
-
-   ```yaml
-   # 変更前
-   - ./docker/nginx/prod.conf:/etc/nginx/conf.d/default.conf:ro
-   # 変更後
-   - ./docker/nginx/prod-https.conf:/etc/nginx/conf.d/default.conf:ro
-   ```
-
+`https://` は付けず、ドメインだけを書きます(例:`app.example.com`)。
 そして Nginx を作り直します。
 
 ```bash
@@ -231,14 +275,21 @@ docker compose -f compose.prod.yml up -d nginx
 `https://自分のドメイン` を開いて、鍵マークが付けば成功です。
 `http://` で開いても、自動でHTTPSへ移ります。
 
+> **仕組み**:`HTTPS_DOMAIN` が空のあいだは `docker/nginx/prod.conf`(HTTP)、
+> 中身が入ると `docker/nginx/prod-https.conf`(HTTPS)が使われます。
+> 証明書の場所もこの値から決まるので、ドメインをファイルに書く必要がありません。
+> **本番のドメインがGitに残らない**のも利点です。
+
 > **起動しなかったら、先にログを見てください。**
 >
 > ```bash
 > docker compose -f compose.prod.yml logs nginx
 > ```
 >
-> `cannot load certificate` と出ていれば、1番のドメインの書き換え忘れです。
-> **HTTP版(`prod.conf`)に戻せばサイトはすぐ復帰します。**落ち着いて直せます。
+> `cannot load certificate` と出ていれば、`HTTPS_DOMAIN` の値が
+> 証明書を取ったドメインと違います(打ち間違い、または取る前に書いた)。
+> **`HTTPS_DOMAIN` を空に戻して `up -d nginx` すれば、HTTPのサイトとしてすぐ復帰します。**
+> 落ち着いて直せます。
 
 ### ⑤ 自動更新を仕掛ける
 
@@ -289,6 +340,7 @@ FLASK_SECURE_COOKIES=True
 
 練習中に `False` にしていた場合、**戻し忘れるとログイン状態が
 HTTPSでない経路でも持ち歩けてしまいます。**
+
 ---
 
 ## 5. よく使うコマンド
@@ -402,6 +454,25 @@ sudo swapon /swapfile
 echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 ```
 
+### CSSやJSを直したのに、本番の画面が古いまま
+
+**そのファイルのURLに「版の印」が付いていない**のが原因です。
+
+本番ではブラウザがCSS・JS・画像を30日間手元に取っておきます。このテンプレートは
+URLに中身から作った印を付けて、直したときだけ取り直させています(`src/web/assets.py`)。
+HTMLに `/static/...` と直接書いたファイルには、この印が付きません。
+
+```html
+<!-- × 印が付かない。直しても古いまま -->
+<link rel="stylesheet" href="/static/css/mypage.css" />
+
+<!-- ○ 印が付く -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/mypage.css') }}" />
+```
+
+手元の画面だけ古いときは、`Ctrl + Shift + R`(Macは `Cmd + Shift + R`)で
+強制的に読み直せます。
+
 ### 鍵マークが付かない / 「保護されていない通信」と出る
 
 まず、どちらの状態か切り分けます。
@@ -412,8 +483,8 @@ docker compose -f compose.prod.yml logs nginx
 
 | ログの様子 | 原因 |
 | --- | --- |
-| `cannot load certificate` | `prod-https.conf` のドメインの書き換え忘れ |
-| 何も出ず、80番で普通に動いている | `compose.prod.yml` のマウント行が `prod.conf` のまま |
+| `cannot load certificate` | `.env` の `HTTPS_DOMAIN` が、証明書を取ったドメインと違う |
+| 何も出ず、80番で普通に動いている | `.env` の `HTTPS_DOMAIN` が空のまま(または書いた後に `up -d nginx` していない) |
 | `certificate has expired` | 自動更新が回っていない(`nginx -s reload` 忘れが多い) |
 
 **証明書そのものの期限は、これで見られます。**
@@ -422,7 +493,7 @@ docker compose -f compose.prod.yml logs nginx
 docker compose -f compose.prod.yml run --rm --entrypoint openssl certbot   x509 -enddate -noout -in /etc/letsencrypt/live/自分のドメイン/fullchain.pem
 ```
 
-どの場合も、`compose.prod.yml` のマウント行を `prod.conf` に戻して
+どの場合も、`.env` の `HTTPS_DOMAIN` を空に戻して
 `up -d nginx` すれば、**HTTPのサイトとしてはすぐ復帰します。**
 慌てて設定をいじる前に、先にサイトを生かしてから直してください。
 

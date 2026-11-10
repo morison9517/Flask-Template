@@ -39,21 +39,6 @@ class Config:
     #   HTMLに直書きすると、名前を変えるときに探し回ることになる。
     SITE_NAME = "Flask Template Demo"
 
-    # ★検索結果でタイトルの下に出る2行。SNSに貼ったときの説明文にもなる。
-    #   120文字前後に収めること。長いと検索結果で途中から切られる。
-    #   ページごとに変えたいときは、render_template に description="..." を渡す。
-    SITE_DESCRIPTION = (
-        "FlaskのWebアプリ開発テンプレート。docker compose up だけで開発環境が立ち上がります。"
-    )
-
-    # SNSに貼ったときに出るサムネイル画像。
-    #
-    # ★空のときは画像用のタグを出さない。画像が無いのにタグだけ出すと、
-    #   SNS側が「画像が取れない」と判断してカードが小さいまま表示される。
-    # 用意するとき: 1200x630 の画像を static/images/ogp.png に置き、
-    #               ここを "/static/images/ogp.png" にする。
-    OGP_IMAGE = ""
-
     # ログイン状態をブラウザに預けるときの割り印。
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-me")
 

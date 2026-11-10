@@ -52,7 +52,7 @@ def create_app(config_class=None) -> Flask:
     _register_commands(app)
     _register_media(app)
     _register_errors(app)
-    _register_seo(app)
+    _register_assets(app)
     _trust_proxy(app)
 
     return app
@@ -65,14 +65,14 @@ def _register_errors(app: Flask) -> None:
     register_error_pages(app)
 
 
-def _register_seo(app: Flask) -> None:
-    """検索結果とSNSでの見え方、/robots.txt、/favicon.ico を取り付ける。
+def _register_assets(app: Flask) -> None:
+    """CSS・JSのURLに「版の印」を付ける。中身は assets.py。
 
-    文言(サイト名・説明文)は config.py、中身は seo.py。
+    ★これが無いと、本番でCSSを直しても利用者の画面は古いままになる。
     """
-    from web.seo import register_seo
+    from web.assets import register_asset_version
 
-    register_seo(app)
+    register_asset_version(app)
 
 
 def _trust_proxy(app: Flask) -> None:

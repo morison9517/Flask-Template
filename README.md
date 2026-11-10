@@ -1,188 +1,131 @@
 # Flask Template Demo
 
-Flask(Python)でWebアプリを作るための開発テンプレート。
-**`docker compose up` だけで、アプリとDBが揃った開発環境が立ち上がります。**
+**はじめてのWebアプリを、短い期間で形にするためのひな型**です。
+ログイン機能つきのWebアプリが、コマンド1つで手元のパソコンに立ち上がります。
 
-ログイン・エラーページ・本番用の構成まで入っているので、**作りたいものの中身から書きはじめられます。**
-コードには「なぜそう書くか」の説明を付けてあり、Pythonが初めての人でも読み進められます。
+> 中身は Python の Flask で作った Webアプリのテンプレートです。
+> 数日〜数週間の個人開発やハッカソンに向けて、**読みやすさと始めやすさを優先**しています。
 
-> リポジトリ名は `case_flask`、画面上の表示名は `Flask Template Demo` です。
-> プロダクト名が決まったら、表示名は `src/web/config.py` の
-> `SITE_NAME` の1か所を直してください(全ページのタイトルとヘッダーに反映されます)。
+---
+
+## あなたはどっち?
+
+| | こんな人 | 最初に読むもの |
+| --- | --- | --- |
+| 🌱 | プログラミングはほぼ初めて。Git や Docker と言われてもピンとこない | **[はじめての人へ(docs/START.md)](docs/START.md)** |
+| 🛠️ | 開発の経験がある。仕組みと使い方だけ知りたい | このページの **[経験者向け:30秒まとめ](#経験者向け30秒まとめ)** |
+
+分からない言葉が出てきたら **[用語集(docs/GLOSSARY.md)](docs/GLOSSARY.md)** を開いてください。
+
+---
+
+## 何ができるの?
+
+起動すると、こんな状態から始められます。
+
+- **ログインの仕組みが動いている**:新規登録・ログイン・ログアウト。パスワードの安全な保存や、何度も間違えた人の締め出しも入っています
+- **画面の土台がある**:ヘッダー・フッターつきの共通の型紙に、ページを1枚ずつ足していけます
+- **データを保存できる**:データベース(MySQL)がつながっています
+- **公開する準備もある**:インターネットに出すための設定と手順書が入っています
+
+あとは **「何を作りたいか」の中身を書くだけ** です。
+
+> 例えると、**内装工事が済んだ空き店舗**です。電気・水道・レジ・鍵はもう付いているので、
+> あなたは「何を売るか」と「お店の飾りつけ」に集中できます。
 
 ---
 
 ## いきなり動かす
 
+Docker Desktop と Git が入っていれば、ターミナルで次の4行です。
+(何のことか分からなければ [はじめての人へ](docs/START.md) から読んでください。順番に説明しています)
+
 ```bash
-# 1. 金庫を作る(初回だけ)
-cp .env.example .env          # Windows: Copy-Item .env.example .env
-
-# 2. 起動する
+git clone https://github.com/morison9517/Flask-Template.git
+cd Flask-Template
+cp .env.example .env          # Windows の場合: Copy-Item .env.example .env
 docker compose up --build
+```
 
-# 3. DBに表を作る(別のターミナルで、初回だけ)
+起動したら、**もう1つターミナルを開いて**、データを入れる表を作ります(初回だけ)。
+
+```bash
 docker compose exec web flask init-db
 ```
 
-→ <http://localhost:5000> を開く
+ブラウザで **<http://localhost:5000>** を開いて「セットアップ完了 🎉」と出れば成功です。
 
-うまくいかないときは **[docs/SETUP.md](docs/SETUP.md)** を見てください。困ったときの対処が全部書いてあります。
+うまくいかないときは **[docs/SETUP.md](docs/SETUP.md) の「困ったとき」** を見てください。
 
 ---
 
-## 最初に出るデモページについて
+## 最初に出る「セットアップ完了」の画面について
 
-起動して `/` を開くと「セットアップ完了 🎉」というデモページが出ます。
-**これは消さなくて大丈夫です。** DjangoやRailsの初期画面と同じ仕組みで、条件を満たすと自動で出なくなります。
+これは**動作確認用の画面(デモ)**です。消す作業は要りません。
+自分のトップページを作った瞬間に、自動で出なくなります。
 
 | | |
 | --- | --- |
-| 出る条件 | 開発モード **かつ** `src/web/routes.py` にまだ `"/"` が無いとき |
-| 消える条件 | `routes.py` に `"/"` を1つ書く(それだけ) |
-| 本番 | `FLASK_ENV=production` では最初から出ない。デモ用の表(`demo_todos`)もDBに作られない |
-| あとで見たい | `/__demo` で開ける(開発モードのときだけ) |
+| 出なくなる条件 | `src/web/routes.py` に `"/"` を1つ書く(書き方は下の「ページを1枚増やしてみる」) |
+| あとで見たいとき | <http://localhost:5000/__demo>(開発中だけ) |
+| 公開したサイト | 最初から出ない |
+| 完全に消したいとき | `src/web/demo/` フォルダを消し、`src/web/app.py` の「デモ」の数行を消す |
+
+---
+
+## ページを1枚増やしてみる
+
+**2つのファイルを触るだけです。**
+
+**① 画面を書く** — `src/web/templates/mypage.html` を新しく作る
+
+```html
+{% extends "base.html" %}
+
+{% block content %}
+<h1>マイページ</h1>
+<p>ここに好きなことを書けます。</p>
+{% endblock %}
+```
+
+ヘッダーやフッターは書きません。1行目の `{% extends "base.html" %}` が、共通の型紙から自動で付けてくれます。
+
+**② URLとつなぐ** — `src/web/routes.py` を2か所直す
 
 ```python
-# src/web/routes.py にこれを書いた瞬間、デモは出なくなります
-@main_bp.get("/")
-def index():
-    return render_template("index.html", title="ホーム")
+from flask import Blueprint, render_template     # ← render_template を足す
+
+
+@main_bp.get("/mypage")                           # ← この4行をファイルの下に足す
+def my_page():
+    return render_template("mypage.html", title="マイページ")
 ```
 
-デモの画面は**1枚で完結しています**(`base.html` も `style.css` も `main.js` も使いません)。
-デモの役目は「セットアップが動いているか」を見せる計器なので、共通ファイルに頼らせていません。
-おかげで `base.html` を自分たちの見た目に作り替えても、この計器だけは最後まで正しく動きます。
-ページの書き方の見本は `src/web/templates/login.html` を見てください(`base.html` を継いだ本物のページです)。
+保存して2〜3秒待ち、<http://localhost:5000/mypage> を開けば表示されます。
 
-デモ一式は `src/web/demo/` にまとまっています。不要になったらフォルダごと削除して、`app.py` の「デモ」の3行を消してください。
+> `"/mypage"` を `"/"` にすると、それがトップページになります(デモの画面は自動で出なくなります)。
 
----
-
-## 使っている技術
-
-| 分類 | 技術 |
-| --- | --- |
-| フロント | 素のHTML / CSS / JavaScript(Jinjaテンプレート) |
-| バック | Flask 3 / SQLAlchemy |
-| DB | MySQL 8.4(確認は DBeaver、ポートは **3307**) |
-| 環境 | Docker Compose |
-| 本番 | Nginx / gunicorn / AWS(**`compose.prod.yml` に構成済み**) |
-| 画像 | Pillow(送られてきたファイルが本当に画像か確かめる用) |
-| 部品管理 | uv |
-
----
-
-## フォルダの地図
-
-「Flaskアプリ = 1軒のお店」だと思って読んでください。
-
-```
-case_flask/
-├── src/web/                お店の建物そのもの(アプリ本体)
-│   ├── app.py              全部をつなげて起動する
-│   ├── config.py           設定を1か所に集める
-│   ├── extensions.py       共用の道具(DB・ログイン管理・CSRF)
-│   ├── models.py           データの形(DBの表)を決める
-│   ├── routes.py           画面を返す受付。URL → HTML
-│   ├── errors.py           エラー画面(404など)。文言の表はここ
-│   ├── loginlimit.py       ログインの失敗回数を数えて締め出す
-│   ├── seo.py              検索・SNSでの見え方、robots.txt、favicon
-│   ├── auth/               ログイン・新規登録
-│   ├── demo/               動作確認用のデモページ(開発モード限定・触らない)
-│   │                       1枚完結なので、書き方の見本は login.html を見ること
-│   ├── templates/          お客さんが見るHTML(base.html が共通の型紙)
-│   │                       error.html は404などで使う共通の1枚
-│   └── static/             CSS / JS / 画像
-│                           robots.txt もここ(サイト直下に出している)
-│
-├── media/                  利用者が上げたファイル(★中身はGitHubに上げない)
-│
-├── docs/                   手順書(SETUP / Pyhelp / DEPLOY)
-├── tools/                  開発中だけ使う小道具スクリプト
-│
-├── compose.yml             アプリとDBをまとめて動かす段取り表(開発用)
-├── compose.prod.yml        本番用の段取り表(★開発中は使わない)
-├── docker/nginx/           本番のNginxの設定(3枚)
-│   ├── app.inc               中身の設定。下の2枚から読み込む1枚
-│   ├── prod.conf             HTTPのまま動かすとき(最初はこちら)
-│   └── prod-https.conf       証明書を取った後
-├── Dockerfile              箱を組み立てるレシピ
-├── pyproject.toml          買い物リスト(必要な部品の一覧)
-├── uv.lock                 レシート(全員が同じバージョンを使うための記録)
-│
-├── .vscode/                チーム共通のエディタ設定
-│
-├── LICENSE                 使ってよい条件(MIT)
-├── .env                    金庫(★GitHubに上げない)
-└── .env.example            金庫の中身の見本(こちらは上げる)
-```
-
----
-
-## 担当ごとに触る場所
-
-複数人で作るときに、**他の人と同じファイルを触らずに済むよう分けてあります。** これでコンフリクト(変更の取り合い)がほぼ起きません。
-
-| 担当 | 触る場所 |
-| --- | --- |
-| 見た目 | `src/web/templates/` `src/web/static/css/` |
-| 画面の動き | `src/web/static/js/` |
-| データの形 | `src/web/models.py` |
-| URLと処理 | `src/web/routes.py` |
-| ログイン | `src/web/auth/` |
-| エラーページの文言 | `src/web/errors.py` |
-| サイト名・説明文 | `src/web/config.py` |
-
-`app.py` `extensions.py` `compose.yml` `Dockerfile` は**土台**です。
-複数人で作っているときは、**先に共有してから**変更してください(全員に影響します)。
-
----
-
-## ページを1枚増やす手順
-
-1. **`src/web/templates/` にHTMLを1枚置く**(`login.html` をコピーするのが早い)
-
-   ```html
-   {% extends "base.html" %}
-
-   {% block content %}
-   <h1>マイページ</h1>
-   {% endblock %}
-   ```
-
-   > ヘッダーとフッターは書きません。`base.html` から自動的に付きます。
-
-2. **`src/web/routes.py` に関数を1つ書く**
-
-   ```python
-   @main_bp.get("/mypage")
-   def my_page():
-       return render_template("mypage.html", title="マイページ")
-   ```
-
-3. 保存して2〜3秒待つ → <http://localhost:5000/mypage>
-
-ログインしている人だけに見せたいときは、1行足すだけです。
+ログインした人だけに見せたいときは、1行足すだけです。
 
 ```python
-from flask_login import login_required
+from flask_login import login_required            # ← ファイルの上に足す
+
 
 @main_bp.get("/mypage")
-@login_required          # ← これを足す
+@login_required                                   # ← これを足す
 def my_page():
     ...
 ```
 
 ---
 
-## base.html(型紙)の仕組み
+## 型紙(`base.html`)の考え方
 
-ヘッダーとフッターを全ページにコピペすると、直すときに全ファイルを回ることになります。
-そこで**共通部分を1枚の「型紙」にまとめ、各ページは真ん中の中身だけを書く**形にしています。
+全ページに同じヘッダーをコピーすると、直すときに全部のファイルを回ることになります。
+そこで**共通部分は1枚の型紙にまとめ、各ページは「真ん中の中身」だけを書きます。**
 
-```
-base.html(型紙)                    mypage.html(中身)
+```text
+base.html(型紙)                      mypage.html(中身)
 ┌──────────────────┐
 │ ヘッダー          │
 ├──────────────────┤
@@ -194,20 +137,63 @@ base.html(型紙)                    mypage.html(中身)
 └──────────────────┘
 ```
 
-穴は3つ用意してあります。
-
-| 穴の名前 | 用途 |
+| 穴の名前 | 何を入れるか |
 | --- | --- |
-| `content` | ページの本体(必須) |
+| `content` | ページの本体(必ず書く) |
 | `head_extra` | そのページだけで使うCSS |
-| `scripts` | そのページだけで使うJS |
-
-**ヘッダーを直したいときは `base.html` を1枚直すだけ**で、全ページに反映されます。
+| `scripts` | そのページだけで使うJavaScript |
 
 > ★つまずきやすい点が2つあります。
 >
-> 1. `{% extends %}` は**必ず1行目**
-> 2. `{% block content %}` の**外に書いたものは表示されない**(エラーも出ない)
+> 1. `{% extends "base.html" %}` は**必ず1行目**に書く
+> 2. `{% block content %}` の**外に書いたものは表示されない**(エラーも出ないので気づきにくい)
+
+---
+
+## フォルダの地図
+
+**ふだん触るのは ★ の付いた場所だけ**です。他は土台なので、最初は気にしなくて構いません。
+
+```text
+Flask-Template/
+├── src/web/                アプリ本体
+│   ├── ★ routes.py         URLと画面をつなぐ(ページを増やすときに触る)
+│   ├── ★ models.py         保存するデータの形を決める
+│   ├── ★ templates/        画面のHTML(base.html が共通の型紙)
+│   ├── ★ static/           CSS / JavaScript / 画像
+│   ├── ★ config.py         サイトの名前などの設定
+│   ├── auth/               ログイン・新規登録
+│   ├── errors.py           エラー画面(404など)の文言
+│   ├── loginlimit.py       ログインを何度も間違えた人を締め出す
+│   ├── demo/               動作確認用の画面(触らなくてよい)
+│   └── app.py ほか         全体をつなぐ土台
+│
+├── docs/                   手順書(START / SETUP / Pyhelp / DEPLOY / GLOSSARY)
+├── media/                  利用者が上げたファイルの置き場
+│
+├── compose.yml             開発用の起動設定
+├── compose.prod.yml        公開用の起動設定
+├── Dockerfile              アプリを動かす「箱」の作り方
+├── docker/nginx/           公開用の入口(Nginx)の設定
+├── pyproject.toml          使っている部品の一覧
+├── uv.lock                 部品の版の記録(全員が同じ版を使うため)
+│
+├── .env.example            設定の見本(これを .env にコピーして使う)
+└── LICENSE                 使ってよい条件(MIT)
+```
+
+> **サイトの名前を変える**:`src/web/config.py` の `SITE_NAME` を1か所直すだけです。
+> 全ページのタイトルとヘッダーに反映されます。
+
+複数人で作るときは、**担当ごとに触るファイルを分ける**と、変更の取り合い(コンフリクト)がほぼ起きません。
+
+| 担当 | 触る場所 |
+| --- | --- |
+| 見た目 | `src/web/templates/` `src/web/static/css/` |
+| 画面の動き | `src/web/static/js/` |
+| データの形 | `src/web/models.py` |
+| URLと処理 | `src/web/routes.py` |
+| ログイン | `src/web/auth/` |
 
 ---
 
@@ -216,74 +202,76 @@ base.html(型紙)                    mypage.html(中身)
 | やりたいこと | コマンド |
 | --- | --- |
 | 起動する | `docker compose up` |
-| 裏で起動する | `docker compose up -d` |
-| 止める | `docker compose down` |
-| エラーを見る | `docker compose logs -f web` |
-| DBに表を作る | `docker compose exec web flask init-db` |
-| DBを作り直す | `docker compose exec web flask drop-db` してから `init-db` |
-| 箱の中に入る | `docker compose exec web bash` |
-| 書き方をチェック | `docker compose exec web ruff check src/` |
+| 止める | 起動したターミナルで `Ctrl + C` |
+| エラーの内容を見る | `docker compose logs -f web` |
+| データを入れる表を作る | `docker compose exec web flask init-db` |
+| 表を作り直す(★データは消える) | `docker compose exec web flask drop-db` のあと `init-db` |
+| 書き方をチェックする | `docker compose exec web ruff check src/` |
+
+詳しい使い方と、困ったときの対処は **[docs/SETUP.md](docs/SETUP.md)** にあります。
 
 ---
 
-## 公開するときに要るものは、入れてあります
+## 経験者向け:30秒まとめ
 
-**手元で動かすだけなら要らないが、外に出すと必ず要るもの**を最初から入れてあります。
-どれも**設定しなくても動き**、**要らなければファイルを消せば外れます。**
+| 項目 | 内容 |
+| --- | --- |
+| 構成 | Flask 3 / SQLAlchemy 2 / Jinja2 / MySQL 8.4 / Python 3.13 |
+| 実行環境 | Docker Compose。dev は `flask run --debug`(自動リロード)、prod は gunicorn 3 workers + Nginx |
+| 依存管理 | uv(`pyproject.toml` + `uv.lock`) |
+| アプリの組み立て | Application Factory(`src/web/app.py` の `create_app()`)+ Blueprint |
+| 認証 | Flask-Login(セッション)。パスワードは Werkzeug のハッシュ。IP単位のログイン試行制限(DBに記録するので複数 worker でも正しく数える) |
+| CSRF | Flask-WTF。フォームは `csrf_token()`、JS は `X-CSRFToken` ヘッダー(`static/js/main.js` の `api` が自動付与) |
+| 設定 | `.env` → 環境変数 → `config.py` |
+| 静的ファイル | `url_for('static')` に中身のハッシュを自動付与(キャッシュ破棄)。本番は Nginx が配信 |
+| 本番 | `compose.prod.yml`。HTTPS は `.env` の `HTTPS_DOMAIN` で切替(Let's Encrypt / certbot)。手順は [DEPLOY.md](docs/DEPLOY.md) |
+| 依存の更新 | Dependabot(月1・まとめて1PR) |
+| ポート | アプリ 5000 / MySQL 3307(ホスト側) |
 
-| 入っているもの | 設定しないとどうなるか | いじる場所 |
-| --- | --- | --- |
-| **エラーページ**(404/500) | そのまま使える | 文言の表1つ(`src/web/errors.py`) |
-| **ログイン試行制限** | そのまま使える(5回失敗で15分) | 回数と時間の定数(`src/web/loginlimit.py`) |
-| **検索・SNSでの見え方** | そのまま使える。説明文は書き換える | サイト名と説明文(`config.py`) |
-| **HTTPS** | HTTPで動く。設定は用意済み | 設定を1行差し替え([docs/DEPLOY.md](docs/DEPLOY.md)) |
+**あえて入れていないもの**(短期・入門向けのため):
 
-> エラーページは `/__error/404` で確認できます(**本番では登録されません**)。
-> 開発中は本物のエラーでは出ないので、見た目はここで確かめてください。
+- **マイグレーション**:`db.create_all()` のみ。表の形を変えるときは作り直し(データは消える)
+- **テスト・CI**:未同梱
+- **SEO / OGP**:未同梱
 
----
-
-## 4つのテンプレートの対応表
-
-同じ構成・同じ画面で作ってあるので、1つ分かれば他も読めます。
-
-| やること | Flask版 | Gin版 | Echo版 | Django版 |
-| --- | --- | --- | --- | --- |
-| 起動の入口 | `src/web/app.py` | `cmd/server/main.go` | `cmd/server/main.go` | `manage.py` + `config/` |
-| 設定 | `config.py` | `internal/config/` | `internal/config/` | `config/settings.py` |
-| データの形 | `models.py` | `internal/models/` | `internal/models/` | `main/models.py` |
-| 画面を返す | `routes.py` | `handlers/page.go` | `handlers/page.go` | `main/views.py` |
-| ログイン | `auth/routes.py` | `handlers/auth.go` | `handlers/auth.go` | `accounts/views.py` |
-| ログイン試行制限 | `loginlimit.py` | `handlers/loginlimit.go` | `handlers/loginlimit.go` | `accounts/loginlimit.py` |
-| エラーページ | `errors.py` | `handlers/error.go` | `handlers/error.go` | `main/errors.py` |
-| 検索・SNS対応 | `seo.py` | `internal/view/page.go` | `internal/view/page.go` | `main/context_processors.py` |
-| 型紙 | `base.html`(Jinja) | `base.html`(Go) | `base.html`(Go) | `base.html`(Django) |
-| 成りすまし対策 | Flask-WTF | 自前で実装 | Echo付属 | Django付属 |
-| 表を作る | `flask init-db` | 起動時に自動 | 起動時に自動 | 起動時に自動 |
-| 表の形を変える | 作り直し(データ消滅) | 列の追加のみ可 | 列の追加のみ可 | **データを保ったまま変更可** |
-| 管理画面 | 無い | 無い | 無い | **`/admin/`** |
-| アプリのポート | 5000 | 8080 | 1323 | 8000 |
-| DBのポート | 3307 | 3308 | 3310 | 3309 |
-| 本番イメージ | 438MB | 48MB | **32MB** | 913MB |
-
-> ポートをずらしてあるので、**4つ同時に起動しても衝突しません。**
-
-> **Gin版とEcho版は、フォルダ構成も画面(HTML/CSS/JS)もまったく同じです。**
-> 違うのは Go のコードの書き方だけなので、2つを並べるとフレームワークの違いだけが見えます。
+コード内のコメントは初心者向けに厚めです。読み飛ばして構いません。
+本書の「箱」「金庫」「整理券」などの言い換えは、[用語集の対応表](docs/GLOSSARY.md#このテンプレートでの呼び方) で正式な用語と対応させています。
+長期運用やチーム開発なら、下の兄弟テンプレートのほうが向いています。
 
 ---
 
-## ドキュメント
+## 物足りなくなったら
 
-- **[docs/SETUP.md](docs/SETUP.md)** — 環境構築、日々の操作、DBeaverでの接続、困ったときの対処
-- **[docs/Pyhelp.md](docs/Pyhelp.md)** — Pythonの書き方(コーディング経験者向けの早わかり)
-- **[docs/DEPLOY.md](docs/DEPLOY.md)** — 本番に出す手順
+このテンプレートは「短く・簡単に」を優先しています。次のようなことが必要になったら、兄弟のテンプレートに移るのが近道です。
+
+| 必要になったこと | 移り先 |
+| --- | --- |
+| 公開した後も、データを残したまま表の形を変えたい | **Django版**(マイグレーションあり) |
+| データを画面から直接見たり直したりしたい | **Django版**(管理画面 `/admin/` あり) |
+| 検索結果やSNSでの見え方を整えたい | Django版・Gin版・Echo版 |
+| 処理の速さや、型による間違い防止がほしい | **Gin版・Echo版**(Go) |
+
+画面(HTML/CSS/JS)の作り方と、型紙の考え方はどれも同じです。ここで覚えたことはそのまま持っていけます。
+
+- Django版:<https://github.com/morison9517/Django-Template>
+- Gin版:<https://github.com/morison9517/Gin-Template>
+- Echo版:<https://github.com/morison9517/Echo-Template>
+
+---
+
+## 手順書の一覧
+
+| ファイル | 中身 |
+| --- | --- |
+| [docs/START.md](docs/START.md) | はじめての人へ。道具の入れ方から、最初の1文字を変えるまで |
+| [docs/SETUP.md](docs/SETUP.md) | 毎日の使い方、データベースの見方、困ったときの対処 |
+| [docs/Pyhelp.md](docs/Pyhelp.md) | Python の書き方(はじめての人と、他の言語を知っている人の両方向け) |
+| [docs/DEPLOY.md](docs/DEPLOY.md) | インターネットに公開する手順 |
+| [docs/GLOSSARY.md](docs/GLOSSARY.md) | 用語集。分からない言葉はここ |
 
 ---
 
 ## ライセンス
 
-MIT License([LICENSE](LICENSE))
-
-自由に使って、改造して、公開して構いません(商用も可)。
-条件は「著作権表示を残すこと」だけです。
+MIT License([LICENSE](LICENSE))。
+自由に使って、改造して、公開して構いません(商用も可)。条件は「著作権表示を残すこと」だけです。
